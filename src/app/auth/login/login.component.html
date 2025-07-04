@@ -1,0 +1,176 @@
+<div class="container mt-5" style="max-width: 500px;">
+
+  <!-- Tabs para diferentes tipos de usuario -->
+  <ul class="nav nav-tabs mb-4" role="tablist">
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" [class.active]="tipoLogin === 'paciente'" type="button" role="tab"
+        (click)="cambiarTipoLogin('paciente')">
+        👤 Pacientes
+      </button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" [class.active]="tipoLogin === 'personal'" type="button" role="tab"
+        (click)="cambiarTipoLogin('personal')">
+        👨‍⚕️ Personal Médico
+      </button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" [class.active]="tipoLogin === 'admin'" type="button" role="tab"
+        (click)="cambiarTipoLogin('admin')">
+        🔧 Administración
+      </button>
+    </li>
+  </ul>
+
+  <div class="tab-content">
+
+    <!-- Login para Pacientes -->
+    <div class="tab-pane" [class.show]="tipoLogin === 'paciente'" [class.active]="tipoLogin === 'paciente'"
+      *ngIf="tipoLogin === 'paciente'">
+      <div class="card">
+        <div class="card-body">
+          <h4 class="card-title text-center mb-3">🏥 Portal de Pacientes</h4>
+          <p class="text-muted text-center mb-4">Accede para agendar y gestionar tus citas médicas</p>
+
+          <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+            <div class="mb-3">
+              <label for="correo" class="form-label">Correo Electrónico</label>
+              <input formControlName="correo" type="email" id="correo" class="form-control"
+                placeholder="paciente&#64;email.com">
+              <div *ngIf="loginForm.get('correo')?.invalid && loginForm.get('correo')?.touched" class="text-danger">
+                Ingrese un correo válido
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label for="password" class="form-label">Contraseña</label>
+              <input formControlName="password" type="password" id="password" class="form-control">
+              <div *ngIf="loginForm.get('password')?.invalid && loginForm.get('password')?.touched" class="text-danger">
+                Mínimo 4 caracteres
+              </div>
+            </div>
+
+            <div *ngIf="error" class="alert alert-danger">{{ error }}</div>
+
+            <button type="submit" class="btn btn-primary w-100 mb-3" [disabled]="loginForm.invalid || isLoading">
+              <span *ngIf="isLoading" class="spinner-border spinner-border-sm me-2"></span>
+              {{ isLoading ? 'Ingresando...' : 'Ingresar como Paciente' }}
+            </button>
+
+            <div class="text-center">
+              <button type="button" class="btn btn-link" routerLink="/registro">
+                ¿No tienes cuenta? Regístrate como paciente
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Login para Personal Médico -->
+    <div class="tab-pane" [class.show]="tipoLogin === 'personal'" [class.active]="tipoLogin === 'personal'"
+      *ngIf="tipoLogin === 'personal'">
+      <div class="card">
+        <div class="card-body">
+          <h4 class="card-title text-center mb-3">👨‍⚕️ Portal Médico</h4>
+          <p class="text-muted text-center mb-4">Acceso para doctores, enfermeros y asistentes médicos</p>
+
+          <!-- Credenciales de ejemplo para doctores -->
+          <div class="alert alert-info">
+            <h6>🔑 Credenciales de prueba:</h6>
+            <small>
+              <strong>Para crear doctores:</strong> Use el panel de administración primero
+            </small>
+          </div>
+
+          <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+            <div class="mb-3">
+              <label for="correo-medico" class="form-label">Correo Institucional</label>
+              <input formControlName="correo" type="email" id="correo-medico" class="form-control"
+                placeholder="doctor&#64;hospital.com">
+              <div *ngIf="loginForm.get('correo')?.invalid && loginForm.get('correo')?.touched" class="text-danger">
+                Ingrese un correo válido
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label for="password-medico" class="form-label">Contraseña</label>
+              <input formControlName="password" type="password" id="password-medico" class="form-control">
+              <div *ngIf="loginForm.get('password')?.invalid && loginForm.get('password')?.touched" class="text-danger">
+                Mínimo 4 caracteres
+              </div>
+            </div>
+
+            <div *ngIf="error" class="alert alert-danger">{{ error }}</div>
+
+            <button type="submit" class="btn btn-success w-100" [disabled]="loginForm.invalid || isLoading">
+              <span *ngIf="isLoading" class="spinner-border spinner-border-sm me-2"></span>
+              {{ isLoading ? 'Ingresando...' : 'Acceder al Portal Médico' }}
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Login para Administradores -->
+    <div class="tab-pane" [class.show]="tipoLogin === 'admin'" [class.active]="tipoLogin === 'admin'"
+      *ngIf="tipoLogin === 'admin'">
+      <div class="card border-warning">
+        <div class="card-body">
+          <h4 class="card-title text-center mb-3">🔧 Panel de Administración</h4>
+          <p class="text-muted text-center mb-4">Acceso exclusivo para administradores del sistema</p>
+
+          <!-- Credenciales de administrador -->
+          <div class="alert alert-warning">
+            <h6>🔑 Credenciales de Administrador:</h6>
+            <div class="row">
+              <div class="col-12">
+                <strong>Email:</strong> admin&#64;hospital.com<br>
+                <strong>Password:</strong> admin123
+              </div>
+            </div>
+            <hr>
+            <small class="text-muted">
+              ⚠️ Cambie estas credenciales después del primer acceso
+            </small>
+          </div>
+
+          <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+            <div class="mb-3">
+              <label for="correo-admin" class="form-label">Email de Administrador</label>
+              <input formControlName="correo" type="email" id="correo-admin" class="form-control"
+                placeholder="admin&#64;hospital.com">
+              <div *ngIf="loginForm.get('correo')?.invalid && loginForm.get('correo')?.touched" class="text-danger">
+                Ingrese un correo válido
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label for="password-admin" class="form-label">Contraseña de Administrador</label>
+              <input formControlName="password" type="password" id="password-admin" class="form-control"
+                placeholder="admin123">
+              <div *ngIf="loginForm.get('password')?.invalid && loginForm.get('password')?.touched" class="text-danger">
+                Mínimo 4 caracteres
+              </div>
+            </div>
+
+            <div *ngIf="error" class="alert alert-danger">{{ error }}</div>
+
+            <button type="submit" class="btn btn-warning w-100" [disabled]="loginForm.invalid || isLoading">
+              <span *ngIf="isLoading" class="spinner-border spinner-border-sm me-2"></span>
+              {{ isLoading ? 'Ingresando...' : 'Acceder como Administrador' }}
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Botón para volver a configuración inicial si es necesario -->
+  <div class="text-center mt-4">
+    <a routerLink="/admin-setup" class="btn btn-outline-secondary btn-sm">
+      🔧 Configuración Inicial del Sistema
+    </a>
+  </div>
+
+</div>

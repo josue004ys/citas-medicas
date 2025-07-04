@@ -1,0 +1,49 @@
+.alert {
+  white-space: pre-line; // Permite saltos de línea en los mensajes
+}
+
+.form-control:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.btn-primary {
+  background-color: #007bff;
+  border-color: #007bff;
+  
+  &:hover {
+    background-color: #0056b3;
+    border-color: #0056b3;
+  }
+}
+
+.horarios-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.horario-btn {
+  padding: 8px 12px;
+  border: 1px solid #dee2e6;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+  
+  &:hover {
+    background-color: #e9ecef;
+    border-color: #007bff;
+  }
+  
+  &.selected {
+    background-color: #007bff;
+    border-color: #007bff;
+    color: white;
+  }
+}
+
+.text-muted {
+  font-size: 0.875rem;
+}
