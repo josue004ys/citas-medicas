@@ -36,6 +36,7 @@ export class LoginComponent {
     this.auth.login(correo, password).subscribe({
       next: (res: any) => {
         console.log('✅ Respuesta del servidor:', res);
+        this.isLoading = false;
 
         // Verificar que la respuesta tenga la estructura esperada
         if (res && res.correo) {
@@ -57,23 +58,20 @@ export class LoginComponent {
           console.error('❌ Respuesta del servidor no válida:', res);
           this.error = 'Error en la respuesta del servidor';
         }
-
-        this.isLoading = false;
       },
       error: (error) => {
         console.error('❌ Error en login:', error);
+        this.isLoading = false;
 
         if (error.status === 401) {
           this.error = 'Credenciales incorrectas. Verifica tu email y contraseña.';
         } else if (error.status === 404) {
           this.error = 'Usuario no encontrado. Verifica tu email.';
         } else if (error.status === 0) {
-          this.error = 'No se puede conectar al servidor. Verifica que el backend esté corriendo.';
+          this.error = 'No se puede conectar al servidor. Verifica que el backend esté corriendo en http://localhost:8081';
         } else {
-          this.error = error.error?.mensaje || 'Error al iniciar sesión. Intenta nuevamente.';
+          this.error = error.error?.mensaje || error.error || 'Error al iniciar sesión. Intenta nuevamente.';
         }
-
-        this.isLoading = false;
       }
     });
   }
@@ -129,6 +127,31 @@ export class LoginComponent {
     // Si es admin, prellenar credenciales
     if (tipo === 'admin') {
       this.llenarCredencialesAdmin();
+    }
+  }
+
+  // Métodos para el diseño dinámico del botón
+  getBtnClass(): string {
+    switch (this.tipoLogin) {
+      case 'admin':
+        return 'btn-warning';
+      case 'personal':
+        return 'btn-success';
+      case 'paciente':
+      default:
+        return 'btn-primary';
+    }
+  }
+
+  getBtnText(): string {
+    switch (this.tipoLogin) {
+      case 'admin':
+        return 'Acceder como Administrador';
+      case 'personal':
+        return 'Acceder al Portal Médico';
+      case 'paciente':
+      default:
+        return 'Ingresar como Paciente';
     }
   }
 }
