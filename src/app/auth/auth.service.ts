@@ -46,6 +46,10 @@ export class AuthService {
     return this.currentUser ? this.currentUser.correo : null;
   }
 
+  obtenerDoctorId(): number | null {
+    return this.currentUser && this.currentUser.doctorId ? this.currentUser.doctorId : null;
+  }
+
   // Nuevos métodos para manejar roles
   obtenerRol(): string | null {
     return this.currentUser ? this.currentUser.rol : null;

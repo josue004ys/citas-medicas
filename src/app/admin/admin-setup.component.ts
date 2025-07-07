@@ -6,10 +6,10 @@ import { Doctor, DoctorService } from '../services/doctor.service';
 import { Especialidad, EspecialidadService } from '../services/especialidad.service';
 
 @Component({
-    selector: 'app-admin-setup',
-    standalone: true,
-    imports: [CommonModule, FormsModule],
-    template: `
+  selector: 'app-admin-setup',
+  standalone: true,
+  imports: [CommonModule, FormsModule],
+  template: `
     <div class="admin-setup-container">
       <div class="header">
         <h1>📋 Panel de Administración</h1>
@@ -182,6 +182,9 @@ import { Especialidad, EspecialidadService } from '../services/especialidad.serv
                 <button (click)="toggleDoctorEstado(doctor)" class="btn-toggle">
                   {{doctor.estado === 'ACTIVO' ? 'Desactivar' : 'Activar'}}
                 </button>
+                <button (click)="eliminarDoctor(doctor)" class="btn-delete">
+                  Eliminar
+                </button>
               </div>
             </div>
           </div>
@@ -194,7 +197,7 @@ import { Especialidad, EspecialidadService } from '../services/especialidad.serv
       </div>
     </div>
   `,
-    styles: [`
+  styles: [`
     .admin-setup-container {
       max-width: 1200px;
       margin: 0 auto;
@@ -340,6 +343,37 @@ import { Especialidad, EspecialidadService } from '../services/especialidad.serv
       cursor: not-allowed;
     }
 
+    .btn-toggle {
+      background: #ffc107;
+      color: #212529;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: background 0.3s;
+      margin-right: 8px;
+    }
+
+    .btn-toggle:hover {
+      background: #e0a800;
+    }
+
+    .btn-delete {
+      background: #dc3545;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    .btn-delete:hover {
+      background: #c82333;
+    }
+
     .lista-container {
       padding: 20px;
     }
@@ -391,40 +425,6 @@ import { Especialidad, EspecialidadService } from '../services/especialidad.serv
       color: #721c24;
     }
 
-    .btn-toggle {
-      background: #ffc107;
-      color: #212529;
-      border: none;
-      padding: 8px 16px;
-      border-radius: 4px;
-      font-size: 0.9rem;
-      cursor: pointer;
-      transition: background 0.3s;
-    }
-
-    .btn-toggle:hover {
-      background: #e0a800;
-    }
-
-    .mensaje {
-      padding: 15px;
-      border-radius: 5px;
-      margin-top: 20px;
-      font-weight: 600;
-    }
-
-    .mensaje.exito {
-      background: #d4edda;
-      color: #155724;
-      border: 1px solid #c3e6cb;
-    }
-
-    .mensaje.error {
-      background: #f8d7da;
-      color: #721c24;
-      border: 1px solid #f5c6cb;
-    }
-
     @media (max-width: 768px) {
       .admin-setup-container {
         padding: 10px;
@@ -444,170 +444,202 @@ import { Especialidad, EspecialidadService } from '../services/especialidad.serv
         align-self: flex-start;
       }
     }
+
+    // ...existing styles...
   `]
 })
 export class AdminSetupComponent implements OnInit {
-    especialidades: Especialidad[] = [];
-    doctores: Doctor[] = [];
+  especialidades: Especialidad[] = [];
+  doctores: Doctor[] = [];
 
-    nuevaEspecialidad = {
-        nombre: '',
-        descripcion: ''
+  nuevaEspecialidad = {
+    nombre: '',
+    descripcion: ''
+  };
+
+  nuevoDoctor = {
+    nombre: '',
+    correo: '',
+    password: '',
+    telefono: '',
+    especialidad: '',
+    numeroLicencia: '',
+    estado: 'ACTIVO'
+  };
+
+  mensaje: string = '';
+  esError: boolean = false;
+
+  constructor(
+    private especialidadService: EspecialidadService,
+    private doctorService: DoctorService,
+    private http: HttpClient
+  ) { }
+
+  ngOnInit() {
+    this.cargarDatos();
+  }
+
+  cargarDatos() {
+    this.cargarEspecialidades();
+    this.cargarDoctores();
+  }
+
+  cargarEspecialidades() {
+    this.especialidadService.obtenerTodasLasEspecialidades().subscribe({
+      next: (especialidades) => {
+        this.especialidades = especialidades;
+        console.log('✅ Especialidades cargadas:', especialidades.length);
+      },
+      error: (error) => {
+        console.error('❌ Error al cargar especialidades:', error);
+        this.mostrarMensaje('Error al cargar especialidades', true);
+      }
+    });
+  }
+
+  cargarDoctores() {
+    // Usamos el endpoint público para obtener todos los doctores
+    this.http.get<Doctor[]>('http://localhost:8081/api/public/doctores').subscribe({
+      next: (doctores) => {
+        this.doctores = doctores;
+        console.log('✅ Doctores cargados:', doctores.length);
+      },
+      error: (error) => {
+        console.error('❌ Error al cargar doctores:', error);
+        this.mostrarMensaje('Error al cargar doctores', true);
+      }
+    });
+  }
+
+  agregarEspecialidad() {
+    if (!this.nuevaEspecialidad.nombre.trim()) {
+      this.mostrarMensaje('El nombre de la especialidad es requerido', true);
+      return;
+    }
+
+    const especialidad = {
+      nombre: this.nuevaEspecialidad.nombre.trim(),
+      descripcion: this.nuevaEspecialidad.descripcion.trim(),
+      activa: true
     };
 
-    nuevoDoctor = {
-        nombre: '',
-        correo: '',
-        password: '',
-        telefono: '',
-        especialidad: '',
-        numeroLicencia: '',
-        estado: 'ACTIVO'
+    this.http.post<Especialidad>('http://localhost:8081/api/especialidades', especialidad).subscribe({
+      next: (nuevaEsp) => {
+        this.especialidades.push(nuevaEsp);
+        this.nuevaEspecialidad = { nombre: '', descripcion: '' };
+        this.mostrarMensaje('✅ Especialidad agregada exitosamente', false);
+      },
+      error: (error) => {
+        console.error('❌ Error al agregar especialidad:', error);
+        this.mostrarMensaje('Error al agregar especialidad', true);
+      }
+    });
+  }
+
+  agregarDoctor() {
+    if (!this.esDoctorValido()) {
+      this.mostrarMensaje('Por favor complete todos los campos requeridos', true);
+      return;
+    }
+
+    const doctor = {
+      nombre: this.nuevoDoctor.nombre.trim(),
+      correo: this.nuevoDoctor.correo.trim(),
+      password: this.nuevoDoctor.password.trim(),
+      telefono: this.nuevoDoctor.telefono.trim(),
+      especialidad: this.nuevoDoctor.especialidad,
+      numeroLicencia: this.nuevoDoctor.numeroLicencia.trim()
     };
 
-    mensaje: string = '';
-    esError: boolean = false;
-
-    constructor(
-        private especialidadService: EspecialidadService,
-        private doctorService: DoctorService,
-        private http: HttpClient
-    ) { }
-
-    ngOnInit() {
-        this.cargarDatos();
-    }
-
-    cargarDatos() {
-        this.cargarEspecialidades();
-        this.cargarDoctores();
-    }
-
-    cargarEspecialidades() {
-        this.especialidadService.obtenerTodasLasEspecialidades().subscribe({
-            next: (especialidades) => {
-                this.especialidades = especialidades;
-                console.log('✅ Especialidades cargadas:', especialidades.length);
-            },
-            error: (error) => {
-                console.error('❌ Error al cargar especialidades:', error);
-                this.mostrarMensaje('Error al cargar especialidades', true);
-            }
-        });
-    }
-
-    cargarDoctores() {
-        // Usamos el endpoint público para obtener todos los doctores
-        this.http.get<Doctor[]>('http://localhost:8081/api/public/doctores').subscribe({
-            next: (doctores) => {
-                this.doctores = doctores;
-                console.log('✅ Doctores cargados:', doctores.length);
-            },
-            error: (error) => {
-                console.error('❌ Error al cargar doctores:', error);
-                this.mostrarMensaje('Error al cargar doctores', true);
-            }
-        });
-    }
-
-    agregarEspecialidad() {
-        if (!this.nuevaEspecialidad.nombre.trim()) {
-            this.mostrarMensaje('El nombre de la especialidad es requerido', true);
-            return;
-        }
-
-        const especialidad = {
-            nombre: this.nuevaEspecialidad.nombre.trim(),
-            descripcion: this.nuevaEspecialidad.descripcion.trim(),
-            activa: true
+    this.http.post<any>('http://localhost:8081/api/admin/doctores', doctor).subscribe({
+      next: (response) => {
+        // Convertir la respuesta al formato esperado por la interfaz
+        const nuevoDoc: Doctor = {
+          id: response.id,
+          nombre: response.nombre,
+          correo: response.correo,
+          especialidad: response.especialidad,
+          telefono: response.telefono,
+          numeroLicencia: response.numeroLicencia,
+          estado: response.estado
         };
 
-        this.http.post<Especialidad>('http://localhost:8081/api/especialidades', especialidad).subscribe({
-            next: (nuevaEsp) => {
-                this.especialidades.push(nuevaEsp);
-                this.nuevaEspecialidad = { nombre: '', descripcion: '' };
-                this.mostrarMensaje('✅ Especialidad agregada exitosamente', false);
-            },
-            error: (error) => {
-                console.error('❌ Error al agregar especialidad:', error);
-                this.mostrarMensaje('Error al agregar especialidad', true);
-            }
-        });
-    }
+        this.doctores.push(nuevoDoc);
+        this.nuevoDoctor = {
+          nombre: '',
+          correo: '',
+          password: '',
+          telefono: '',
+          especialidad: '',
+          numeroLicencia: '',
+          estado: 'ACTIVO'
+        };
+        this.mostrarMensaje('✅ Doctor agregado exitosamente', false);
+      },
+      error: (error) => {
+        console.error('❌ Error al agregar doctor:', error);
+        this.mostrarMensaje(`Error al agregar doctor: ${error.error?.error || error.message}`, true);
+      }
+    });
+  }
 
-    agregarDoctor() {
-        if (!this.esDoctorValido()) {
-            this.mostrarMensaje('Por favor complete todos los campos requeridos', true);
-            return;
+  esDoctorValido(): boolean {
+    return !!(
+      this.nuevoDoctor.nombre.trim() &&
+      this.nuevoDoctor.correo.trim() &&
+      this.nuevoDoctor.password.trim() &&
+      this.nuevoDoctor.password.length >= 6 &&
+      this.nuevoDoctor.especialidad &&
+      this.nuevoDoctor.numeroLicencia.trim()
+    );
+  }
+
+  toggleEspecialidadEstado(especialidad: Especialidad) {
+    // Aquí implementarías la lógica para cambiar el estado de la especialidad
+    this.mostrarMensaje('Funcionalidad de cambio de estado pendiente de implementar', true);
+  }
+
+  toggleDoctorEstado(doctor: Doctor) {
+    this.http.put<Doctor>(`http://localhost:8081/api/doctores/${doctor.id}/toggle-estado`, {}).subscribe({
+      next: (doctorActualizado) => {
+        // Actualizar el doctor en la lista local
+        const index = this.doctores.findIndex(d => d.id === doctor.id);
+        if (index !== -1) {
+          this.doctores[index] = doctorActualizado;
         }
 
-        const doctor = {
-            nombre: this.nuevoDoctor.nombre.trim(),
-            correo: this.nuevoDoctor.correo.trim(),
-            password: this.nuevoDoctor.password.trim(),
-            telefono: this.nuevoDoctor.telefono.trim(),
-            especialidad: this.nuevoDoctor.especialidad,
-            numeroLicencia: this.nuevoDoctor.numeroLicencia.trim()
-        };
+        const accion = doctorActualizado.estado === 'ACTIVO' ? 'activado' : 'desactivado';
+        this.mostrarMensaje(`Doctor ${doctor.nombre} ${accion} exitosamente`, false);
+      },
+      error: (error) => {
+        console.error('❌ Error al cambiar estado del doctor:', error);
+        this.mostrarMensaje('Error al cambiar el estado del doctor: ' + (error.error?.message || error.message), true);
+      }
+    });
+  }
 
-        this.http.post<any>('http://localhost:8081/api/admin/doctores', doctor).subscribe({
-            next: (response) => {
-                // Convertir la respuesta al formato esperado por la interfaz
-                const nuevoDoc: Doctor = {
-                    id: response.id,
-                    nombre: response.nombre,
-                    correo: response.correo,
-                    especialidad: response.especialidad,
-                    telefono: response.telefono,
-                    numeroLicencia: response.numeroLicencia,
-                    estado: response.estado
-                };
-
-                this.doctores.push(nuevoDoc);
-                this.nuevoDoctor = {
-                    nombre: '',
-                    correo: '',
-                    password: '',
-                    telefono: '',
-                    especialidad: '',
-                    numeroLicencia: '',
-                    estado: 'ACTIVO'
-                };
-                this.mostrarMensaje('✅ Doctor agregado exitosamente', false);
-            },
-            error: (error) => {
-                console.error('❌ Error al agregar doctor:', error);
-                this.mostrarMensaje(`Error al agregar doctor: ${error.error?.error || error.message}`, true);
-            }
-        });
+  eliminarDoctor(doctor: Doctor) {
+    if (confirm(`¿Estás seguro de que deseas eliminar al doctor ${doctor.nombre}? Esta acción no se puede deshacer.`)) {
+      this.http.delete(`http://localhost:8081/api/doctores/${doctor.id}`).subscribe({
+        next: () => {
+          // Remover el doctor de la lista local
+          this.doctores = this.doctores.filter(d => d.id !== doctor.id);
+          this.mostrarMensaje(`Doctor ${doctor.nombre} eliminado exitosamente`, false);
+        },
+        error: (error) => {
+          console.error('❌ Error al eliminar doctor:', error);
+          this.mostrarMensaje('Error al eliminar el doctor: ' + (error.error?.message || error.message), true);
+        }
+      });
     }
+  }
 
-    esDoctorValido(): boolean {
-        return !!(
-            this.nuevoDoctor.nombre.trim() &&
-            this.nuevoDoctor.correo.trim() &&
-            this.nuevoDoctor.password.trim() &&
-            this.nuevoDoctor.password.length >= 6 &&
-            this.nuevoDoctor.especialidad &&
-            this.nuevoDoctor.numeroLicencia.trim()
-        );
-    }
-
-    toggleEspecialidadEstado(especialidad: Especialidad) {
-        // Aquí implementarías la lógica para cambiar el estado de la especialidad
-        this.mostrarMensaje('Funcionalidad de cambio de estado pendiente de implementar', true);
-    }
-
-    toggleDoctorEstado(doctor: Doctor) {
-        // Aquí implementarías la lógica para cambiar el estado del doctor
-        this.mostrarMensaje('Funcionalidad de cambio de estado pendiente de implementar', true);
-    }
-
-    mostrarMensaje(texto: string, esError: boolean) {
-        this.mensaje = texto;
-        this.esError = esError;
-        setTimeout(() => {
-            this.mensaje = '';
-        }, 5000);
-    }
+  mostrarMensaje(texto: string, esError: boolean) {
+    this.mensaje = texto;
+    this.esError = esError;
+    setTimeout(() => {
+      this.mensaje = '';
+    }, 5000);
+  }
 }

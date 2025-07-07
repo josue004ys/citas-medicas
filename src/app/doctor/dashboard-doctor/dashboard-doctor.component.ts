@@ -175,24 +175,18 @@ export class DashboardDoctorComponent implements OnInit {
     this.cargando = true;
     this.error = '';
 
-    const correoDoctor = this.auth.obtenerCorreo();
-    if (!correoDoctor) {
+    const doctorId = this.auth.obtenerDoctorId();
+    if (!doctorId) {
       this.error = 'No se pudo identificar al doctor logueado';
       this.cargando = false;
       return;
     }
 
-    // Cargar todas las citas del doctor
-    this.http.get<any[]>(`${this.URL_BASE}/citas`).subscribe({
+    // Cargar citas específicas del doctor
+    this.http.get<any[]>(`${this.URL_BASE}/citas/doctor/${doctorId}`).subscribe({
       next: (citas) => {
-        console.log('📅 Citas recibidas del servidor:', citas);
-
-        // Filtrar solo las citas del doctor actual
-        this.todasLasCitas = citas.filter(cita =>
-          cita.doctorCorreo === correoDoctor ||
-          cita.doctor?.correo === correoDoctor
-        );
-
+        console.log('📅 Citas del doctor recibidas:', citas);
+        this.todasLasCitas = citas;
         this.procesarCitas();
         this.cargando = false;
       },

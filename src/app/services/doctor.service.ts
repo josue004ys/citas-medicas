@@ -56,7 +56,7 @@ export class DoctorService {
 
   // Obtener horarios de un doctor para una fecha específica
   obtenerHorariosDisponibles(doctorId: number, fecha: string): Observable<string[]> {
-    return this.http.get<string[]>(`${this.URL}/${doctorId}/horarios-disponibles?fecha=${fecha}`).pipe(
+    return this.http.get<string[]>(`http://localhost:8081/api/horarios/doctor/${doctorId}/disponibles?fecha=${fecha}`).pipe(
       catchError(error => {
         console.error('❌ Error al obtener horarios disponibles:', error);
         return throwError(() => error);
