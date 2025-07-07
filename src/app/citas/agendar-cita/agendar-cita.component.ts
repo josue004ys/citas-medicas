@@ -1,10 +1,10 @@
-import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
-import { CitaService } from '../cita.service';
-import { DoctorService, Doctor } from '../../services/doctor.service';
-import { EspecialidadService } from '../../services/especialidad.service';
-import { AuthService } from '../../auth/auth.service';
 import { CommonModule } from '@angular/common';
+import { Component, OnInit } from '@angular/core';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { AuthService } from '../../auth/auth.service';
+import { Doctor, DoctorService } from '../../services/doctor.service';
+import { EspecialidadService } from '../../services/especialidad.service';
+import { CitaService } from '../cita.service';
 
 interface HorarioOption {
   valor: string;
@@ -28,7 +28,7 @@ export class AgendarCitaComponent implements OnInit {
   cargandoDoctores: boolean = false;
   fechaSeleccionada: string = '';
   doctorSeleccionado: number | null = null;
-  
+
   doctores: Doctor[] = [];
   especialidades: string[] = [];
 
@@ -59,7 +59,7 @@ export class AgendarCitaComponent implements OnInit {
       hora: ['', Validators.required],
       motivoConsulta: ['', [Validators.required, Validators.minLength(10)]]
     };
-    
+
     // Si es asistente, agregar campos para correo y nombre del paciente
     if (this.auth.esAsistente()) {
       formConfig.correoPaciente = ['', [Validators.required, Validators.email]];
@@ -77,67 +77,45 @@ export class AgendarCitaComponent implements OnInit {
 
   cargarEspecialidades() {
     console.log('🔄 Cargando especialidades desde el backend...');
-    
+
     this.especialidadService.obtenerNombresEspecialidades().subscribe({
       next: (especialidades) => {
         this.especialidades = especialidades;
         console.log('✅ Especialidades cargadas desde backend:', this.especialidades);
+
+        if (this.especialidades.length === 0) {
+          console.log('ℹ️ No hay especialidades registradas en el sistema');
+        }
       },
       error: (error) => {
         console.error('❌ Error al cargar especialidades desde backend:', error);
-        // Fallback a datos demo
-        this.especialidades = [
-          'Medicina General', 
-          'Cardiología', 
-          'Pediatría', 
-          'Ginecología', 
-          'Dermatología',
-          'Neurología',
-          'Traumatología',
-          'Oftalmología'
-        ];
-        console.log('ℹ️ Usando especialidades demo como fallback');
+        this.especialidades = [];
+        this.error = 'No se pudieron cargar las especialidades. Por favor, verifica que haya especialidades registradas en el sistema.';
       }
     });
   }
 
   cargarDoctores() {
     this.cargandoDoctores = true;
-    
-    // Usar datos demo por ahora
-    setTimeout(() => {
-      this.doctores = [
-        {
-          id: 1,
-          nombre: 'Dr. Juan Pérez',
-          especialidad: 'Cardiología',
-          telefono: '555-0123',
-          correo: 'juan.perez@hospital.com',
-          numeroLicencia: 'LIC123456',
-          estado: 'ACTIVO'
-        },
-        {
-          id: 2,
-          nombre: 'Dra. Ana Martínez',
-          especialidad: 'Pediatría',
-          telefono: '555-0124',
-          correo: 'ana.martinez@hospital.com',
-          numeroLicencia: 'LIC789012',
-          estado: 'ACTIVO'
-        },
-        {
-          id: 3,
-          nombre: 'Dr. Carlos López',
-          especialidad: 'Dermatología',
-          telefono: '555-0125',
-          correo: 'carlos.lopez@hospital.com',
-          numeroLicencia: 'LIC345678',
-          estado: 'ACTIVO'
+    console.log('🔄 Cargando doctores desde el backend...');
+
+    this.doctorService.obtenerDoctoresActivos().subscribe({
+      next: (doctores: Doctor[]) => {
+        this.doctores = doctores;
+        this.cargandoDoctores = false;
+        console.log('✅ Doctores cargados desde backend:', this.doctores);
+
+        if (this.doctores.length === 0) {
+          console.log('ℹ️ No hay doctores registrados en el sistema');
         }
-      ];
-      this.cargandoDoctores = false;
-      console.log('✅ Doctores demo cargados:', this.doctores);
-    }, 500);
+      },
+      error: (error: any) => {
+        console.error('❌ Error al cargar doctores desde backend:', error);
+        this.doctores = [];
+        this.cargandoDoctores = false;
+        this.error = 'No se pudieron cargar los doctores. Por favor, verifica que haya doctores registrados en el sistema.';
+      }
+    });
   }
 
   filtrarDoctoresPorEspecialidad(especialidad: string) {
@@ -181,7 +159,7 @@ export class AgendarCitaComponent implements OnInit {
       // Limpiar hora seleccionada cuando cambia el doctor
       this.form.get('hora')?.setValue('');
     });
-    
+
     // Observar cambios en la fecha para cargar horarios disponibles
     this.form.get('fecha')?.valueChanges.subscribe(fecha => {
       if (fecha && fecha !== this.fechaSeleccionada) {
@@ -221,7 +199,7 @@ export class AgendarCitaComponent implements OnInit {
       return;
     }
 
-    const verificaciones = this.todosLosHorarios.map(horario => 
+    const verificaciones = this.todosLosHorarios.map(horario =>
       this.citaService.verificarDisponibilidad(fecha, horario.valor, this.doctorSeleccionado!)
         .toPromise()
         .then(disponible => ({ horario: horario.valor, disponible }))
@@ -232,7 +210,7 @@ export class AgendarCitaComponent implements OnInit {
       this.horariosDisponibles = resultados
         .filter(resultado => resultado.disponible)
         .map(resultado => resultado.horario);
-      
+
       console.log('✅ Horarios disponibles (método individual):', this.horariosDisponibles);
       this.cargandoHorarios = false;
     }).catch(error => {
@@ -285,9 +263,9 @@ export class AgendarCitaComponent implements OnInit {
         this.fechaSeleccionada = '';
         this.doctorSeleccionado = null;
         this.isLoading = false;
-        
+
         console.log('✅ Cita agendada:', response);
-        
+
         // Scroll hacia arriba para mostrar el mensaje
         window.scrollTo(0, 0);
       },
@@ -324,7 +302,7 @@ export class AgendarCitaComponent implements OnInit {
     if (horarioOption) {
       return horarioOption.texto;
     }
-    
+
     // Fallback: convertir formato HH:mm a formato legible
     const [horas, minutos] = hora.split(':');
     const horaNum = parseInt(horas);

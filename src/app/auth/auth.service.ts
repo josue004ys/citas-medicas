@@ -1,5 +1,5 @@
-import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
 
 @Injectable({ providedIn: 'root' })
@@ -64,7 +64,8 @@ export class AuthService {
   }
 
   esMedico(): boolean {
-    return this.obtenerRol() === 'MEDICO';
+    const rol = this.obtenerRol();
+    return rol === 'MEDICO' || rol === 'DOCTOR';
   }
 
   esDoctor(): boolean {

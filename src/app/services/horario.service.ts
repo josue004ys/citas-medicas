@@ -1,5 +1,5 @@
-import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
+import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
 export interface HorarioDoctor {
@@ -21,19 +21,23 @@ export class HorarioService {
 
   constructor(private http: HttpClient) { }
 
-  crearHorario(horario: HorarioDoctor): Observable<HorarioDoctor> {
-    return this.http.post<HorarioDoctor>(this.apiUrl, horario);
+  crearHorario(horario: HorarioDoctor): Observable<any> {
+    return this.http.post<any>(this.apiUrl, horario);
   }
 
-  obtenerHorariosPorDoctor(): Observable<HorarioDoctor[]> {
-    return this.http.get<HorarioDoctor[]>(`${this.apiUrl}/mis-horarios`);
+  obtenerHorariosPorDoctor(doctorId?: number): Observable<HorarioDoctor[]> {
+    if (doctorId) {
+      return this.http.get<HorarioDoctor[]>(`${this.apiUrl}/doctor/${doctorId}`);
+    } else {
+      return this.http.get<HorarioDoctor[]>(`${this.apiUrl}/mis-horarios`);
+    }
   }
 
   obtenerHorariosDisponibles(doctorId: number, fecha: string): Observable<string[]> {
     const params = new HttpParams()
       .set('doctorId', doctorId.toString())
       .set('fecha', fecha);
-    
+
     return this.http.get<string[]>(`${this.apiUrl}/doctor/${doctorId}/disponibles`, { params });
   }
 
@@ -41,10 +45,8 @@ export class HorarioService {
     return this.http.put<HorarioDoctor>(`${this.apiUrl}/${id}`, horario);
   }
 
-  toggleEstadoHorario(id: number, activar: boolean, motivo?: string): Observable<HorarioDoctor> {
-    const endpoint = activar ? 'activar' : 'bloquear';
-    const body = motivo ? { motivo } : {};
-    return this.http.put<HorarioDoctor>(`${this.apiUrl}/${id}/${endpoint}`, body);
+  toggleEstadoHorario(id: number, activar: boolean, motivo?: string): Observable<any> {
+    return this.http.put<any>(`${this.apiUrl}/${id}/toggle-estado`, {});
   }
 
   eliminarHorario(id: number): Observable<void> {

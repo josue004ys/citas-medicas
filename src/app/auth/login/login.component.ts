@@ -63,15 +63,39 @@ export class LoginComponent {
         console.error('❌ Error en login:', error);
         this.isLoading = false;
 
-        if (error.status === 401) {
-          this.error = 'Credenciales incorrectas. Verifica tu email y contraseña.';
+        // Manejo mejorado de errores con mensajes más específicos
+        if (error.status === 0) {
+          this.error = '🔌 No se puede conectar al servidor. Verifica que el backend esté ejecutándose en el puerto 8081.';
+        } else if (error.status === 400) {
+          // Errores específicos del backend
+          const errorMessage = error.error;
+          if (typeof errorMessage === 'string') {
+            if (errorMessage.includes('Usuario no encontrado')) {
+              this.error = '❌ Usuario no encontrado. Verifica que el correo electrónico sea correcto.';
+            } else if (errorMessage.includes('Contraseña incorrecta')) {
+              this.error = '🔑 Contraseña incorrecta. Verifica tu contraseña e intenta nuevamente.';
+            } else {
+              this.error = `❌ ${errorMessage}`;
+            }
+          } else {
+            this.error = '❌ Error de autenticación. Verifica tus credenciales.';
+          }
+        } else if (error.status === 401) {
+          this.error = '🔐 Credenciales no válidas. Verifica tu correo y contraseña.';
         } else if (error.status === 404) {
-          this.error = 'Usuario no encontrado. Verifica tu email.';
-        } else if (error.status === 0) {
-          this.error = 'No se puede conectar al servidor. Verifica que el backend esté corriendo en http://localhost:8081';
+          this.error = '🔍 Usuario no encontrado. ¿Te has registrado previamente?';
+        } else if (error.status === 500) {
+          this.error = '⚠️ Error del servidor. Intenta nuevamente en unos momentos.';
         } else {
-          this.error = error.error?.mensaje || error.error || 'Error al iniciar sesión. Intenta nuevamente.';
+          // Error genérico con mensaje del servidor si está disponible
+          const serverMessage = error.error?.mensaje || error.error || error.message;
+          this.error = `❌ Error: ${serverMessage || 'Error inesperado al iniciar sesión.'}`;
         }
+
+        // Auto-limpiar el error después de 8 segundos
+        setTimeout(() => {
+          this.error = '';
+        }, 8000);
       }
     });
   }

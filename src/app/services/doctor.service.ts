@@ -1,5 +1,5 @@
-import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { Injectable } from '@angular/core';
 import { Observable, catchError, throwError } from 'rxjs';
 import { EspecialidadService } from './especialidad.service';
 
@@ -17,12 +17,12 @@ export interface Doctor {
   providedIn: 'root'
 })
 export class DoctorService {
-  private URL = 'http://localhost:8081/api/doctores';
+  private URL = 'http://localhost:8081/api/public/doctores';
 
   constructor(
     private http: HttpClient,
     private especialidadService: EspecialidadService
-  ) {}
+  ) { }
 
   // Obtener todos los doctores activos
   obtenerDoctoresActivos(): Observable<Doctor[]> {

@@ -1,8 +1,9 @@
-import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { HorarioService, HorarioDoctor } from '../../services/horario.service';
+import { HttpClient } from '@angular/common/http';
+import { Component, OnInit } from '@angular/core';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AuthService } from '../../auth/auth.service';
+import { HorarioDoctor, HorarioService } from '../../services/horario.service';
 
 @Component({
   selector: 'app-gestionar-horarios',
@@ -251,6 +252,7 @@ export class GestionarHorariosComponent implements OnInit {
   error = '';
   modoEdicion = false;
   horarioEditando?: HorarioDoctor;
+  doctorId?: number;
 
   diasSemana = [
     { valor: 'MONDAY', nombre: 'Lunes' },
@@ -265,7 +267,8 @@ export class GestionarHorariosComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private horarioService: HorarioService,
-    private auth: AuthService
+    private auth: AuthService,
+    private http: HttpClient
   ) {
     this.horarioForm = this.fb.group({
       dia: ['', Validators.required],
@@ -276,75 +279,72 @@ export class GestionarHorariosComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.cargarHorarios();
+    this.obtenerDoctorId().then(() => {
+      this.cargarHorarios();
+    });
+  }
+
+  async obtenerDoctorId() {
+    const correoDoctor = this.auth.obtenerCorreo();
+    if (!correoDoctor) {
+      this.error = 'No se pudo identificar al doctor logueado';
+      return;
+    }
+
+    try {
+      const doctores = await this.http.get<any[]>('http://localhost:8081/api/doctores').toPromise();
+      const doctor = doctores?.find(d => d.correo === correoDoctor);
+      if (doctor) {
+        this.doctorId = doctor.id;
+        console.log('✅ Doctor ID encontrado:', this.doctorId);
+      } else {
+        this.error = 'Doctor no encontrado en el sistema';
+      }
+    } catch (error) {
+      console.error('❌ Error al obtener ID del doctor:', error);
+      this.error = 'Error al obtener información del doctor';
+    }
   }
 
   cargarHorarios() {
+    if (!this.doctorId) {
+      this.error = 'ID del doctor no disponible';
+      return;
+    }
+
     this.cargandoHorarios = true;
-    
-    // Usar datos demo por ahora
-    setTimeout(() => {
-      this.horarios = [
-        {
-          id: 1,
-          dia: 'MONDAY',
-          horaInicio: '09:00',
-          horaFin: '12:00',
-          duracionCita: 30,
-          estado: 'ACTIVO',
-          observaciones: 'Horario matutino'
-        },
-        {
-          id: 2,
-          dia: 'WEDNESDAY',
-          horaInicio: '14:00',
-          horaFin: '17:00',
-          duracionCita: 45,
-          estado: 'ACTIVO',
-          observaciones: 'Horario vespertino'
-        },
-        {
-          id: 3,
-          dia: 'FRIDAY',
-          horaInicio: '08:00',
-          horaFin: '11:00',
-          duracionCita: 30,
-          estado: 'BLOQUEADO',
-          observaciones: 'Horario temporal bloqueado'
-        }
-      ];
-      this.cargandoHorarios = false;
-      console.log('✅ Horarios demo cargados:', this.horarios);
-    }, 500);
-    
-    // Comentado - usar cuando el backend esté listo
-    /*
-    this.horarioService.obtenerHorariosPorDoctor()
+
+    this.horarioService.obtenerHorariosPorDoctor(this.doctorId)
       .subscribe({
         next: (horarios: HorarioDoctor[]) => {
           this.horarios = horarios;
           this.cargandoHorarios = false;
+          console.log('✅ Horarios cargados del backend:', horarios);
         },
         error: (err: any) => {
-          this.error = 'Error al cargar horarios: ' + (err.error?.error || err.message);
+          console.error('❌ Error al cargar horarios:', err);
+          this.error = 'Error al cargar horarios: ' + (err.error?.message || err.message);
           this.cargandoHorarios = false;
         }
       });
-    */
   }
 
   guardarHorario() {
-    if (!this.horarioForm.valid) return;
+    if (!this.horarioForm.valid || !this.doctorId) return;
 
     this.cargando = true;
-    const datosHorario = this.horarioForm.value;
+    const datosHorario = {
+      ...this.horarioForm.value,
+      doctorId: this.doctorId
+    };
 
-    const request = this.modoEdicion 
+    const request = this.modoEdicion
       ? this.horarioService.actualizarHorario(this.horarioEditando!.id!, datosHorario)
       : this.horarioService.crearHorario(datosHorario);
 
     request.subscribe({
       next: (response: any) => {
+        console.log('✅ Respuesta del servidor:', response);
         this.mensaje = this.modoEdicion ? 'Horario actualizado correctamente' : 'Horario creado correctamente';
         this.horarioForm.reset({ duracionCita: 30 });
         this.cargarHorarios();
@@ -352,7 +352,8 @@ export class GestionarHorariosComponent implements OnInit {
         this.cargando = false;
       },
       error: (err: any) => {
-        this.error = err.error?.error || 'Error al guardar el horario';
+        console.error('❌ Error al guardar horario:', err);
+        this.error = err.error?.message || 'Error al guardar el horario';
         this.cargando = false;
       }
     });
@@ -378,7 +379,7 @@ export class GestionarHorariosComponent implements OnInit {
   toggleEstadoHorario(horario: HorarioDoctor) {
     const activar = horario.estado !== 'ACTIVO';
     const motivo = activar ? undefined : 'Bloqueado temporalmente';
-    
+
     this.horarioService.toggleEstadoHorario(horario.id!, activar, motivo).subscribe({
       next: () => {
         this.mensaje = `Horario ${activar ? 'activado' : 'bloqueado'} correctamente`;

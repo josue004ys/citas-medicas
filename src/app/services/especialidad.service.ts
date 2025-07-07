@@ -1,5 +1,5 @@
-import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { Injectable } from '@angular/core';
 import { Observable, catchError, throwError } from 'rxjs';
 
 export interface Especialidad {
@@ -93,9 +93,9 @@ export class EspecialidadService {
           // Fallback a especialidades por defecto
           observer.next([
             'Medicina General',
-            'Cardiología', 
-            'Pediatría', 
-            'Ginecología', 
+            'Cardiología',
+            'Pediatría',
+            'Ginecología',
             'Dermatología',
             'Neurología',
             'Traumatología',
