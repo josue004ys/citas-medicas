@@ -6,6 +6,7 @@ import { AgendarCitaComponent } from './citas/agendar-cita/agendar-cita.componen
 import { MisCitasComponent } from './citas/mis-citas/mis-citas.component';
 import { AuthGuard } from './core/guards/auth.guard';
 import { DashboardDoctorComponent } from './doctor/dashboard-doctor/dashboard-doctor.component';
+import { GestionarCitasDoctorComponent } from './doctor/gestionar-citas-doctor/gestionar-citas-doctor.component';
 import { GestionarHorariosComponent } from './doctor/gestionar-horarios/gestionar-horarios.component';
 import { HomeComponent } from './home/home.component';
 
@@ -25,6 +26,7 @@ export const routes: Routes = [
   // Rutas para doctores
   { path: 'doctor/dashboard', component: DashboardDoctorComponent, canActivate: [AuthGuard] },
   { path: 'doctor/gestionar-horarios', component: GestionarHorariosComponent, canActivate: [AuthGuard] },
+  { path: 'doctor/gestionar-citas', component: GestionarCitasDoctorComponent, canActivate: [AuthGuard] },
 
   { path: '**', redirectTo: '/admin-setup' }
 ];

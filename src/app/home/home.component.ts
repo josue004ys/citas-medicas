@@ -1,5 +1,5 @@
-import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Component, OnInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../auth/auth.service';
 
@@ -99,27 +99,7 @@ import { AuthService } from '../auth/auth.service';
           <!-- Botón para cambiar entre roles (demo) -->
           <div class="row mt-5">
             <div class="col-md-12 text-center">
-              <div *ngIf="auth.esPaciente()" class="mt-4 pt-4 border-top">
-                <h6 class="text-muted mb-3">Demo del Sistema</h6>
-                <button class="btn btn-info btn-sm" (click)="cambiarADoctor()">
-                  <i class="fas fa-user-md me-2"></i>
-                  Ver Demo como Doctor
-                </button>
-                <small class="d-block text-muted mt-2">
-                  Cambia temporalmente a la vista de doctor para ver todas las funcionalidades
-                </small>
-              </div>
-
-              <div *ngIf="auth.esDoctor()" class="mt-4 pt-4 border-top">
-                <h6 class="text-muted mb-3">Demo del Sistema</h6>
-                <button class="btn btn-success btn-sm" (click)="cambiarAPaciente()">
-                  <i class="fas fa-user me-2"></i>
-                  Ver Demo como Paciente
-                </button>
-                <small class="d-block text-muted mt-2">
-                  Cambia temporalmente a la vista de paciente para ver otras funcionalidades
-                </small>
-              </div>
+              <!-- Contenido principal del home -->
             </div>
           </div>
         </div>
@@ -156,37 +136,19 @@ import { AuthService } from '../auth/auth.service';
 export class HomeComponent implements OnInit {
   estadisticas: any = {};
 
-  constructor(public auth: AuthService) {}
+  constructor(public auth: AuthService) { }
 
   ngOnInit(): void {
     this.cargarEstadisticas();
-    
-    // Auto-login demo si no hay usuario autenticado
-    if (!this.auth.estaAutenticado()) {
-      this.auth.loginDemo().then(() => {
-        console.log('🎯 Auto-login demo completado');
-        this.cargarEstadisticas();
-      });
-    }
   }
 
   cargarEstadisticas(): void {
-    // Estadísticas demo para mostrar funcionalidad
+    // Estadísticas del sistema
     this.estadisticas = {
       totalCitas: 24,
       citasHoy: 3,
       citasPendientes: 5,
       doctoresDisponibles: 8
     };
-  }
-
-  cambiarADoctor(): void {
-    this.auth.cambiarARol('doctor');
-    this.cargarEstadisticas();
-  }
-
-  cambiarAPaciente(): void {
-    this.auth.cambiarARol('paciente');
-    this.cargarEstadisticas();
   }
 }

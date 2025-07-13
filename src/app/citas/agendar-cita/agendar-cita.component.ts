@@ -246,11 +246,9 @@ export class AgendarCitaComponent implements OnInit {
       fecha,
       hora,
       motivoConsulta,
-      // Si es asistente agendando para otro paciente
-      ...(this.auth.esAsistente() && correoPaciente && nombrePaciente && {
-        correoPaciente,
-        nombrePaciente
-      })
+      // SIEMPRE incluir el correo del paciente
+      correoPaciente: this.auth.esAsistente() && correoPaciente ? correoPaciente : correoUsuario,
+      nombrePaciente: this.auth.esAsistente() && nombrePaciente ? nombrePaciente : this.auth.obtenerUsuario()?.nombre || 'Usuario'
     };
 
     console.log('📅 Enviando solicitud de cita:', solicitudCita);

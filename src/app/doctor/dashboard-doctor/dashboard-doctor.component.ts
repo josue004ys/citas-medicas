@@ -35,20 +35,20 @@ import { AuthService } from '../../auth/auth.service';
           </div>
         </div>
         <div class="col-md-3">
+          <div class="card text-center bg-success text-white">
+            <div class="card-body">
+              <i class="fas fa-calendar-week fa-2x mb-2"></i>
+              <h5>{{ citasFuturas.length }}</h5>
+              <small>Próximas Citas</small>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
           <div class="card text-center bg-warning text-white">
             <div class="card-body">
               <i class="fas fa-clock fa-2x mb-2"></i>
               <h5>{{ citasPendientes.length }}</h5>
               <small>Pendientes</small>
-            </div>
-          </div>
-        </div>
-        <div class="col-md-3">
-          <div class="card text-center bg-success text-white">
-            <div class="card-body">
-              <i class="fas fa-check-circle fa-2x mb-2"></i>
-              <h5>{{ citasCompletadas.length }}</h5>
-              <small>Completadas</small>
             </div>
           </div>
         </div>
@@ -63,9 +63,10 @@ import { AuthService } from '../../auth/auth.service';
         </div>
       </div>
 
-      <!-- Lista de citas del día -->
+      <!-- Lista de citas del día y futuras -->
       <div class="row">
-        <div class="col-12">
+        <!-- Citas de Hoy -->
+        <div class="col-12 mb-4">
           <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
               <h5 class="mb-0"><i class="fas fa-calendar-day me-2"></i>Citas de Hoy</h5>
@@ -127,6 +128,58 @@ import { AuthService } from '../../auth/auth.service';
             </div>
           </div>
         </div>
+
+        <!-- Citas Futuras -->
+        <div class="col-12">
+          <div class="card">
+            <div class="card-header">
+              <h5 class="mb-0"><i class="fas fa-calendar-week me-2"></i>Próximas Citas</h5>
+            </div>
+            <div class="card-body">
+              <div *ngIf="!cargando && citasFuturas.length === 0" class="text-center py-4 text-muted">
+                <i class="fas fa-calendar-plus fa-3x mb-3"></i>
+                <p>No tienes citas programadas próximamente</p>
+              </div>
+
+              <div *ngIf="!cargando && citasFuturas.length > 0" class="table-responsive">
+                <table class="table table-hover">
+                  <thead class="table-light">
+                    <tr>
+                      <th>Fecha</th>
+                      <th>Hora</th>
+                      <th>Paciente</th>
+                      <th>Tipo de Consulta</th>
+                      <th>Estado</th>
+                      <th>Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let cita of citasFuturas">
+                      <td><strong>{{ formatearFecha(cita.fechaHora) }}</strong></td>
+                      <td>{{ formatearHora(cita.fechaHora) }}</td>
+                      <td>
+                        <i class="fas fa-user me-1"></i>
+                        {{ cita.pacienteNombre || 'Sin especificar' }}
+                      </td>
+                      <td>{{ cita.tipoConsulta || 'Consulta general' }}</td>
+                      <td>
+                        <span class="badge" [ngClass]="getEstadoBadgeClass(cita.estado)">
+                          {{ cita.estado || 'PROGRAMADA' }}
+                        </span>
+                      </td>
+                      <td>
+                        <button class="btn btn-sm btn-outline-info" 
+                                (click)="verDetalles(cita)">
+                          <i class="fas fa-eye"></i>
+                        </button>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Mensaje de error -->
@@ -155,6 +208,7 @@ import { AuthService } from '../../auth/auth.service';
 export class DashboardDoctorComponent implements OnInit {
   todasLasCitas: any[] = [];
   citasHoy: any[] = [];
+  citasFuturas: any[] = [];
   citasPendientes: any[] = [];
   citasCompletadas: any[] = [];
   cargando: boolean = false;
@@ -176,23 +230,96 @@ export class DashboardDoctorComponent implements OnInit {
     this.error = '';
 
     const doctorId = this.auth.obtenerDoctorId();
+
     if (!doctorId) {
-      this.error = 'No se pudo identificar al doctor logueado';
-      this.cargando = false;
+      this.buscarDoctorPorCorreo();
       return;
     }
 
     // Cargar citas específicas del doctor
     this.http.get<any[]>(`${this.URL_BASE}/citas/doctor/${doctorId}`).subscribe({
       next: (citas) => {
-        console.log('📅 Citas del doctor recibidas:', citas);
         this.todasLasCitas = citas;
         this.procesarCitas();
         this.cargando = false;
       },
       error: (error) => {
-        console.error('❌ Error al cargar citas:', error);
         this.error = 'Error al cargar las citas. Verifica que el servidor esté funcionando.';
+        this.cargando = false;
+      }
+    });
+  }
+  // Método alternativo para buscar doctor por correo
+  buscarDoctorPorCorreo() {
+    const correo = this.auth.obtenerCorreo();
+    if (!correo) {
+      this.error = 'No se pudo identificar al doctor logueado (sin correo)';
+      this.cargando = false;
+      return;
+    }
+
+    // Buscar doctor por correo
+    this.http.get<any>(`${this.URL_BASE}/doctores/buscar?correo=${correo}`).subscribe({
+      next: (doctor) => {
+        if (doctor && doctor.id) {
+          // Actualizar la información del usuario con el doctorId
+          const usuario = this.auth.obtenerUsuario();
+          usuario.doctorId = doctor.id;
+          this.auth.guardarUsuario(usuario);
+
+          // Ahora cargar las citas con el doctorId encontrado
+          this.cargarCitasConId(doctor.id);
+        } else {
+          this.crearDoctorSiNoExiste();
+        }
+      },
+      error: (error) => {
+        this.crearDoctorSiNoExiste();
+      }
+    });
+  }
+
+  // Método auxiliar para cargar citas con un ID específico
+  cargarCitasConId(doctorId: number) {
+    this.http.get<any[]>(`${this.URL_BASE}/citas/doctor/${doctorId}`).subscribe({
+      next: (citas) => {
+        this.todasLasCitas = citas;
+        this.procesarCitas();
+        this.cargando = false;
+      },
+      error: (error) => {
+        this.error = 'Error al cargar las citas. Verifica que el servidor esté funcionando.';
+        this.cargando = false;
+      }
+    });
+  }
+
+  // Método para crear el doctor si no existe
+  crearDoctorSiNoExiste() {
+    console.log('🔧 Intentando crear/verificar doctor...');
+
+    const correo = this.auth.obtenerCorreo();
+    const requestBody = correo ? { correo: correo } : {};
+
+    this.http.post<any>(`${this.URL_BASE}/doctores/init-data`, requestBody).subscribe({
+      next: (response) => {
+        console.log('✅ Respuesta del servidor:', response);
+
+        if (response.doctor) {
+          // Actualizar la información del usuario con el doctorId
+          const usuario = this.auth.obtenerUsuario();
+          usuario.doctorId = response.doctor.id;
+          this.auth.guardarUsuario(usuario);
+
+          console.log('✅ Usuario actualizado con doctorId:', response.doctor.id);
+
+          // Intentar cargar citas nuevamente
+          this.cargarCitas();
+        }
+      },
+      error: (error) => {
+        console.error('❌ Error al crear/verificar doctor:', error);
+        this.error = 'Error al crear el doctor: ' + (error.error?.error || error.message);
         this.cargando = false;
       }
     });
@@ -208,6 +335,11 @@ export class DashboardDoctorComponent implements OnInit {
       return fechaCita >= inicioHoy && fechaCita < finHoy;
     });
 
+    this.citasFuturas = this.todasLasCitas.filter(cita => {
+      const fechaCita = new Date(cita.fechaHora);
+      return fechaCita >= finHoy;
+    });
+
     this.citasPendientes = this.todasLasCitas.filter(cita =>
       cita.estado === 'PROGRAMADA' || cita.estado === 'CONFIRMADA'
     );
@@ -221,6 +353,15 @@ export class DashboardDoctorComponent implements OnInit {
     return new Date(fechaHora).toLocaleTimeString('es-ES', {
       hour: '2-digit',
       minute: '2-digit'
+    });
+  }
+
+  formatearFecha(fechaHora: string): string {
+    return new Date(fechaHora).toLocaleDateString('es-ES', {
+      weekday: 'short',
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
     });
   }
 

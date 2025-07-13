@@ -1,0 +1,339 @@
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2 class="text-primary mb-1">
+                        <i class="fas fa-clipboard-list me-2"></i>
+                        Gestión de Citas Médicas
+                    </h2>
+                    <p class="text-muted mb-0">Administra situaciones especiales con tus citas programadas</p>
+                </div>
+                <button class="btn btn-outline-primary" (click)="cargarCitas()">
+                    <i class="fas fa-sync-alt me-2"></i>
+                    Actualizar
+                </button>
+            </div>
+
+            <!-- Mensajes -->
+            <div *ngIf="mensaje" class="alert alert-success alert-dismissible fade show">
+                <i class="fas fa-check-circle me-2"></i>
+                {{ mensaje }}
+                <button type="button" class="btn-close" (click)="limpiarMensajes()"></button>
+            </div>
+
+            <div *ngIf="error" class="alert alert-danger alert-dismissible fade show">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                {{ error }}
+                <button type="button" class="btn-close" (click)="limpiarMensajes()"></button>
+            </div>
+
+            <!-- Loading -->
+            <div *ngIf="isLoading" class="text-center py-4">
+                <div class="spinner-border text-primary"></div>
+                <p class="mt-2">Cargando citas...</p>
+            </div>
+
+            <!-- Lista de Citas -->
+            <div *ngIf="!isLoading" class="row">
+                <div *ngFor="let cita of citas" class="col-md-6 col-lg-4 mb-4">
+                    <div class="card border-start border-primary border-4 h-100">
+                        <div class="card-body">
+
+                            <!-- Header de la cita -->
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <h6 class="card-title text-primary mb-0">
+                                    <i class="fas fa-user me-2"></i>
+                                    {{ cita.pacienteNombre }}
+                                </h6>
+                                <span [ngClass]="getBadgeClass(cita.estado)">
+                                    {{ cita.estado }}
+                                </span>
+                            </div>
+
+                            <!-- Información de la cita -->
+                            <div class="mb-3">
+                                <div class="small text-muted mb-1">
+                                    <i class="fas fa-calendar me-1"></i>
+                                    {{ formatDate(cita.fechaHora) }}
+                                </div>
+                                <div class="small text-muted mb-1">
+                                    <i class="fas fa-clock me-1"></i>
+                                    {{ formatTime(cita.fechaHora) }}
+                                </div>
+                                <div class="small text-muted mb-2">
+                                    <i class="fas fa-envelope me-1"></i>
+                                    {{ cita.pacienteCorreo }}
+                                </div>
+                                <div class="small">
+                                    <strong>Motivo:</strong> {{ cita.motivoConsulta }}
+                                </div>
+                            </div>
+
+                            <!-- Acciones -->
+                            <div class="d-flex flex-wrap gap-2">
+                                <button class="btn btn-sm btn-outline-warning" (click)="abrirModalReprogramar(cita)"
+                                    title="Reprogramar cita">
+                                    <i class="fas fa-calendar-alt me-1"></i>
+                                    Reprogramar
+                                </button>
+
+                                <button class="btn btn-sm btn-outline-info" (click)="abrirModalReasignar(cita)"
+                                    title="Reasignar a otro doctor">
+                                    <i class="fas fa-user-md me-1"></i>
+                                    Reasignar
+                                </button>
+
+                                <button class="btn btn-sm btn-outline-danger" (click)="abrirModalCancelar(cita)"
+                                    title="Cancelar cita">
+                                    <i class="fas fa-times me-1"></i>
+                                    Cancelar
+                                </button>
+
+                                <button class="btn btn-sm btn-outline-secondary" (click)="verHistorial(cita)"
+                                    title="Ver historial">
+                                    <i class="fas fa-history me-1"></i>
+                                    Historial
+                                </button>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Mensaje cuando no hay citas -->
+                <div *ngIf="citas.length === 0" class="col-12">
+                    <div class="alert alert-info text-center">
+                        <i class="fas fa-info-circle me-2"></i>
+                        No tienes citas pendientes o confirmadas para gestionar.
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- ========= MODAL REPROGRAMAR ========= -->
+<div class="modal fade" [class.show]="mostrarModalReprogramar"
+    [style.display]="mostrarModalReprogramar ? 'block' : 'none'">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-calendar-alt me-2"></i>
+                    Reprogramar Cita
+                </h5>
+                <button type="button" class="btn-close" (click)="cerrarModales()"></button>
+            </div>
+            <form [formGroup]="reprogramarForm" (ngSubmit)="reprogramarCita()">
+                <div class="modal-body">
+                    <div *ngIf="citaSeleccionada" class="alert alert-light">
+                        <strong>Paciente:</strong> {{ citaSeleccionada.pacienteNombre }}<br>
+                        <strong>Cita actual:</strong> {{ formatDate(citaSeleccionada.fechaHora) }} - {{
+                        formatTime(citaSeleccionada.fechaHora) }}
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Nueva Fecha</label>
+                        <input type="date" class="form-control" formControlName="nuevaFecha" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Nueva Hora</label>
+                        <input type="time" class="form-control" formControlName="nuevaHora" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Motivo de la reprogramación</label>
+                        <select class="form-select" formControlName="motivo" required>
+                            <option value="">Selecciona un motivo...</option>
+                            <option value="Emergencia médica">Emergencia médica</option>
+                            <option value="Enfermedad del doctor">Enfermedad del doctor</option>
+                            <option value="Conflicto de horarios">Conflicto de horarios</option>
+                            <option value="Mantenimiento de equipo">Mantenimiento de equipo</option>
+                            <option value="Otro">Otro</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Mensaje al paciente</label>
+                        <textarea class="form-control" rows="3" formControlName="mensajePaciente"
+                            placeholder="Mensaje explicativo para el paciente..." required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" (click)="cerrarModales()">Cancelar</button>
+                    <button type="submit" class="btn btn-warning" [disabled]="reprogramarForm.invalid || isLoading">
+                        <span *ngIf="isLoading" class="spinner-border spinner-border-sm me-2"></span>
+                        Reprogramar Cita
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ========= MODAL CANCELAR ========= -->
+<div class="modal fade" [class.show]="mostrarModalCancelar" [style.display]="mostrarModalCancelar ? 'block' : 'none'">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-times me-2"></i>
+                    Cancelar Cita
+                </h5>
+                <button type="button" class="btn-close" (click)="cerrarModales()"></button>
+            </div>
+            <form [formGroup]="cancelarForm" (ngSubmit)="cancelarCita()">
+                <div class="modal-body">
+                    <div *ngIf="citaSeleccionada" class="alert alert-warning">
+                        <strong>⚠️ Atención:</strong> Estás a punto de cancelar la cita con:<br>
+                        <strong>Paciente:</strong> {{ citaSeleccionada.pacienteNombre }}<br>
+                        <strong>Fecha:</strong> {{ formatDate(citaSeleccionada.fechaHora) }} - {{
+                        formatTime(citaSeleccionada.fechaHora) }}
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Motivo de la cancelación</label>
+                        <select class="form-select" formControlName="motivo" required>
+                            <option value="">Selecciona un motivo...</option>
+                            <option value="Emergencia médica">Emergencia médica</option>
+                            <option value="Enfermedad del doctor">Enfermedad del doctor</option>
+                            <option value="Problema técnico">Problema técnico</option>
+                            <option value="Falta de disponibilidad">Falta de disponibilidad</option>
+                            <option value="Otro">Otro</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Mensaje al paciente</label>
+                        <textarea class="form-control" rows="4" formControlName="mensajePaciente"
+                            placeholder="Mensaje explicativo y disculpas al paciente..." required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" (click)="cerrarModales()">Cancelar</button>
+                    <button type="submit" class="btn btn-danger" [disabled]="cancelarForm.invalid || isLoading">
+                        <span *ngIf="isLoading" class="spinner-border spinner-border-sm me-2"></span>
+                        Confirmar Cancelación
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ========= MODAL REASIGNAR ========= -->
+<div class="modal fade" [class.show]="mostrarModalReasignar" [style.display]="mostrarModalReasignar ? 'block' : 'none'">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-user-md me-2"></i>
+                    Reasignar Cita
+                </h5>
+                <button type="button" class="btn-close" (click)="cerrarModales()"></button>
+            </div>
+            <form [formGroup]="reasignarForm" (ngSubmit)="reasignarCita()">
+                <div class="modal-body">
+                    <div *ngIf="citaSeleccionada" class="alert alert-info">
+                        <strong>Paciente:</strong> {{ citaSeleccionada.pacienteNombre }}<br>
+                        <strong>Especialidad:</strong> {{ citaSeleccionada.especialidad }}<br>
+                        <strong>Fecha:</strong> {{ formatDate(citaSeleccionada.fechaHora) }} - {{
+                        formatTime(citaSeleccionada.fechaHora) }}
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Nuevo Doctor</label>
+                        <select class="form-select" formControlName="nuevoDoctorId" required>
+                            <option value="">Selecciona un doctor...</option>
+                            <option *ngFor="let doctor of doctoresDisponibles" [value]="doctor.id">
+                                Dr. {{ doctor.nombre }} - {{ doctor.especialidad }}
+                            </option>
+                        </select>
+                        <div *ngIf="doctoresDisponibles.length === 0" class="form-text text-warning">
+                            No hay otros doctores disponibles de la misma especialidad.
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Motivo de la reasignación</label>
+                        <select class="form-select" formControlName="motivo" required>
+                            <option value="">Selecciona un motivo...</option>
+                            <option value="Emergencia médica">Emergencia médica</option>
+                            <option value="Enfermedad del doctor">Enfermedad del doctor</option>
+                            <option value="Mejor especialización">Mejor especialización del nuevo doctor</option>
+                            <option value="Disponibilidad de horarios">Disponibilidad de horarios</option>
+                            <option value="Otro">Otro</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Mensaje al paciente</label>
+                        <textarea class="form-control" rows="3" formControlName="mensajePaciente"
+                            placeholder="Mensaje explicativo sobre el cambio de doctor..." required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" (click)="cerrarModales()">Cancelar</button>
+                    <button type="submit" class="btn btn-info"
+                        [disabled]="reasignarForm.invalid || isLoading || doctoresDisponibles.length === 0">
+                        <span *ngIf="isLoading" class="spinner-border spinner-border-sm me-2"></span>
+                        Reasignar Cita
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ========= MODAL HISTORIAL ========= -->
+<div class="modal fade" [class.show]="mostrarModalHistorial" [style.display]="mostrarModalHistorial ? 'block' : 'none'">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-history me-2"></i>
+                    Historial de la Cita
+                </h5>
+                <button type="button" class="btn-close" (click)="cerrarModales()"></button>
+            </div>
+            <div class="modal-body">
+                <div *ngIf="citaSeleccionada" class="alert alert-light mb-4">
+                    <strong>Paciente:</strong> {{ citaSeleccionada.pacienteNombre }}<br>
+                    <strong>Fecha actual:</strong> {{ formatDate(citaSeleccionada.fechaHora) }} - {{
+                    formatTime(citaSeleccionada.fechaHora) }}
+                </div>
+
+                <div class="timeline">
+                    <div *ngFor="let evento of historialCita" class="timeline-item">
+                        <div class="timeline-marker"></div>
+                        <div class="timeline-content">
+                            <h6 class="mb-1">{{ evento.evento }}</h6>
+                            <p class="text-muted small mb-1">{{ evento.fecha | date:'dd/MM/yyyy HH:mm' }}</p>
+                            <p class="mb-0">{{ evento.descripcion }}</p>
+                            <div *ngIf="evento.observaciones" class="mt-2 p-2 bg-light rounded">
+                                <small>{{ evento.observaciones }}</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div *ngIf="historialCita.length === 0" class="text-center text-muted">
+                    <i class="fas fa-info-circle me-2"></i>
+                    No hay historial disponible para esta cita.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" (click)="cerrarModales()">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Backdrop para modales -->
+<div *ngIf="mostrarModalReprogramar || mostrarModalCancelar || mostrarModalReasignar || mostrarModalHistorial"
+    class="modal-backdrop fade show" (click)="cerrarModales()"></div>

@@ -57,39 +57,31 @@ export class MisCitasComponent implements OnInit {
     this.error = '';
     this.mensaje = '';
 
-    let endpoint = '';
+    // Cargar citas desde el backend
+    this.http.get<Cita[]>(`${this.URL_BASE}/citas`).subscribe({
+      next: (todasLasCitas) => {
+        console.log('📅 Todas las citas recibidas:', todasLasCitas);
 
-    if (this.auth.esDoctor()) {
-      // Si es doctor, usar endpoint para obtener citas por doctor
-      const doctorId = this.auth.obtenerDoctorId();
-      if (!doctorId) {
-        this.error = 'No se pudo identificar al doctor.';
-        this.cargando = false;
-        return;
-      }
-      endpoint = `${this.URL_BASE}/citas/doctor/${doctorId}`;
-    } else {
-      // Si es paciente, usar endpoint para obtener citas por paciente
-      endpoint = `${this.URL_BASE}/citas/paciente/${correo}`;
-    }
-
-    console.log('🔍 Cargando citas desde:', endpoint);
-
-    this.http.get<Cita[]>(endpoint).subscribe({
-      next: (citas) => {
-        console.log('� Citas recibidas:', citas);
-        this.citas = citas;
-        this.cargando = false;
-
-        if (this.citas.length === 0) {
-          this.mensaje = this.auth.esDoctor()
-            ? 'No tienes citas programadas como doctor.'
-            : 'No tienes citas programadas como paciente.';
+        // Filtrar citas según el rol del usuario
+        if (this.auth.esDoctor()) {
+          // Si es doctor, mostrar solo sus citas
+          this.citas = todasLasCitas.filter(cita =>
+            cita.doctorCorreo === correo
+          );
+          console.log('👨‍⚕️ Citas filtradas para doctor:', this.citas);
+        } else {
+          // Si es paciente, mostrar solo sus citas
+          this.citas = todasLasCitas.filter(cita =>
+            cita.pacienteCorreo === correo
+          );
+          console.log('👤 Citas filtradas para paciente:', this.citas);
         }
+
+        this.cargando = false;
       },
       error: (error) => {
         console.error('❌ Error al cargar citas:', error);
-        this.error = 'Error al cargar las citas: ' + (error.error?.message || error.message);
+        this.error = 'Error al cargar las citas. Verifica que el servidor esté funcionando.';
         this.cargando = false;
       }
     });

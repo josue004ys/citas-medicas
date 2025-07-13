@@ -35,7 +35,6 @@ export class AuthService {
   guardarUsuario(userData: any) {
     this.currentUser = userData;
     localStorage.setItem('currentUser', JSON.stringify(userData));
-    console.log('✅ Usuario guardado en localStorage:', userData);
   }
 
   obtenerUsuario(): any {
@@ -47,7 +46,35 @@ export class AuthService {
   }
 
   obtenerDoctorId(): number | null {
-    return this.currentUser && this.currentUser.doctorId ? this.currentUser.doctorId : null;
+    if (!this.currentUser) {
+      console.log('🔍 obtenerDoctorId: No hay usuario logueado');
+      return null;
+    }
+
+    console.log('🔍 obtenerDoctorId: Usuario actual:', this.currentUser);
+
+    // Intentar obtener doctorId de diferentes formas
+    let doctorId = null;
+
+    // Forma 1: directamente como doctorId
+    if (this.currentUser.doctorId) {
+      doctorId = this.currentUser.doctorId;
+      console.log('🔍 obtenerDoctorId: Encontrado como doctorId:', doctorId);
+    }
+    // Forma 2: como id (si el usuario es un doctor)
+    else if (this.currentUser.id && this.esDoctor()) {
+      doctorId = this.currentUser.id;
+      console.log('🔍 obtenerDoctorId: Encontrado como id (es doctor):', doctorId);
+    }
+
+    // Convertir a número si es string
+    if (doctorId && typeof doctorId === 'string') {
+      doctorId = parseInt(doctorId);
+      console.log('🔍 obtenerDoctorId: Convertido a número:', doctorId);
+    }
+
+    console.log('🔍 obtenerDoctorId: Resultado final:', doctorId);
+    return doctorId;
   }
 
   // Nuevos métodos para manejar roles
@@ -102,40 +129,5 @@ export class AuthService {
     localStorage.removeItem('currentUser');
     console.log('✅ Sesión cerrada');
     this.router.navigate(['/login']);
-  }
-
-  // Método para inicializar datos de demo
-  initDemoData() {
-    return this.http.post(`${this.URL}/init-demo-data`, {});
-  }
-
-  // Método para simular login con usuario demo
-  loginDemo() {
-    const demoUser = {
-      correo: 'paciente@test.com',
-      nombre: 'María González',
-      rol: 'PACIENTE',
-      rolDescripcion: 'Paciente',
-      mensaje: 'Login demo exitoso'
-    };
-    this.guardarUsuario(demoUser);
-    return Promise.resolve(demoUser);
-  }
-
-  // Método para cambiar roles en demo
-  cambiarARol(nuevoRol: string) {
-    if (this.currentUser) {
-      if (nuevoRol === 'doctor') {
-        this.currentUser.rol = 'MEDICO';
-        this.currentUser.rolDescripcion = 'Médico';
-        this.currentUser.nombre = 'Dr. Juan Pérez';
-      } else {
-        this.currentUser.rol = 'PACIENTE';
-        this.currentUser.rolDescripcion = 'Paciente';
-        this.currentUser.nombre = 'María González';
-      }
-      localStorage.setItem('currentUser', JSON.stringify(this.currentUser));
-      console.log('🔄 Rol cambiado a:', nuevoRol);
-    }
   }
 }
