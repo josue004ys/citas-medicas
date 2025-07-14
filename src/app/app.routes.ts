@@ -11,12 +11,12 @@ import { GestionarHorariosComponent } from './doctor/gestionar-horarios/gestiona
 import { HomeComponent } from './home/home.component';
 
 export const routes: Routes = [
-  { path: '', redirectTo: '/admin-setup', pathMatch: 'full' },
+  { path: '', redirectTo: '/login', pathMatch: 'full' },
   { path: 'login', component: LoginComponent },
   { path: 'registro', component: RegistroComponent },
   { path: 'home', component: HomeComponent, canActivate: [AuthGuard] },
 
-  // Ruta para configuración inicial (sin guard para acceso directo)
+  // Ruta para configuración inicial (solo para administradores)
   { path: 'admin-setup', component: AdminSetupComponent },
 
   // Rutas para pacientes y asistentes
@@ -28,5 +28,5 @@ export const routes: Routes = [
   { path: 'doctor/gestionar-horarios', component: GestionarHorariosComponent, canActivate: [AuthGuard] },
   { path: 'doctor/gestionar-citas', component: GestionarCitasDoctorComponent, canActivate: [AuthGuard] },
 
-  { path: '**', redirectTo: '/admin-setup' }
+  { path: '**', redirectTo: '/login' }
 ];

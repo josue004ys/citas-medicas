@@ -84,7 +84,22 @@
                       Ver Detalles
                     </button>
 
-                    <button *ngIf="cita.estado === 'PENDIENTE' || cita.estado === 'CONFIRMADA'"
+                    <!-- Botones específicos para pacientes -->
+                    <div *ngIf="auth.esPaciente() && (cita.estado === 'PENDIENTE' || cita.estado === 'CONFIRMADA')">
+                      <button class="btn btn-outline-warning btn-sm me-2" (click)="solicitarReprogramacion(cita)">
+                        <i class="fas fa-calendar-alt me-1"></i>
+                        Reprogramar
+                      </button>
+
+                      <button class="btn btn-outline-danger btn-sm" (click)="cancelarCitaPaciente(cita)"
+                        [disabled]="cancelando">
+                        <i class="fas fa-times me-1"></i>
+                        {{ cancelando ? 'Cancelando...' : 'Cancelar' }}
+                      </button>
+                    </div>
+
+                    <!-- Botón de cancelar para doctores (funcionalidad existente) -->
+                    <button *ngIf="auth.esDoctor() && (cita.estado === 'PENDIENTE' || cita.estado === 'CONFIRMADA')"
                       class="btn btn-outline-danger btn-sm" (click)="cancelarCita(cita.id)" [disabled]="cancelando">
                       <i class="fas fa-times me-1"></i>
                       Cancelar
@@ -171,3 +186,82 @@
       </div>
     </div>
   </div>
+
+  <!-- Modal para reprogramar cita (solo para pacientes) -->
+  <div class="modal fade" id="reprogramarModal" tabindex="-1" *ngIf="mostrarFormularioReprogramar"
+    [style.display]="mostrarFormularioReprogramar ? 'block' : 'none'" [class.show]="mostrarFormularioReprogramar">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">
+            <i class="fas fa-calendar-alt me-2"></i>
+            Reprogramar Cita
+          </h5>
+          <button type="button" class="btn-close" (click)="cancelarReprogramacion()"></button>
+        </div>
+        <div class="modal-body">
+          <div *ngIf="citaAReprogramar" class="mb-3">
+            <div class="alert alert-info">
+              <strong>Cita actual:</strong>
+              {{ citaAReprogramar.fechaHora | date:'dd/MM/yyyy HH:mm' }}
+              con {{ citaAReprogramar.doctorNombre }}
+            </div>
+          </div>
+
+          <form>
+            <div class="mb-3">
+              <label for="nuevaFecha" class="form-label">Nueva Fecha:</label>
+              <input type="date" id="nuevaFecha" class="form-control" [(ngModel)]="nuevaFecha" name="nuevaFecha"
+                (change)="onFechaChange()" required>
+            </div>
+
+            <div class="mb-3">
+              <label for="nuevaHora" class="form-label">Horarios Disponibles:</label>
+              <div *ngIf="cargandoHorarios" class="text-center">
+                <span class="spinner-border spinner-border-sm me-2"></span>
+                Cargando horarios disponibles...
+              </div>
+              <select id="nuevaHora" class="form-control" [(ngModel)]="nuevaHora" name="nuevaHora" required
+                [disabled]="cargandoHorarios || horariosDisponibles.length === 0">
+                <option value="">Seleccione un horario disponible</option>
+                <option *ngFor="let horario of horariosDisponibles" [value]="horario">
+                  {{ horario }}
+                </option>
+              </select>
+              <small class="form-text text-muted"
+                *ngIf="horariosDisponibles.length === 0 && !cargandoHorarios && nuevaFecha">
+                No hay horarios disponibles para esta fecha. Pruebe con otra fecha.
+              </small>
+            </div>
+
+            <div class="mb-3">
+              <label for="motivoReprogramacion" class="form-label">Motivo de la reprogramación (opcional):</label>
+              <textarea id="motivoReprogramacion" class="form-control" rows="3" [(ngModel)]="motivoReprogramacion"
+                name="motivoReprogramacion"
+                placeholder="Ej: Conflicto de horario, emergencia personal, etc."></textarea>
+            </div>
+
+            <div *ngIf="error" class="alert alert-danger">
+              <i class="fas fa-exclamation-triangle me-2"></i>
+              {{ error }}
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="cancelarReprogramacion()">
+            Cancelar
+          </button>
+          <button type="button" class="btn btn-primary" (click)="confirmarReprogramacion()"
+            [disabled]="cargando || !nuevaFecha || !nuevaHora">
+            <span *ngIf="cargando" class="spinner-border spinner-border-sm me-2"></span>
+            {{ cargando ? 'Reprogramando...' : 'Confirmar Reprogramación' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Backdrop del modal -->
+  <div class="modal-backdrop fade" [class.show]="mostrarFormularioReprogramar" *ngIf="mostrarFormularioReprogramar"
+    (click)="cancelarReprogramacion()"></div>
+</div>

@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../auth/auth.service';
 
 interface Cita {
@@ -10,6 +11,7 @@ interface Cita {
   motivoConsulta: string;
   doctorNombre: string;
   doctorCorreo: string;
+  doctorId: number;
   especialidad: string;
   pacienteNombre: string;
   pacienteCorreo: string;
@@ -22,7 +24,7 @@ interface Cita {
 @Component({
   selector: 'app-mis-citas',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './mis-citas.component.html',
   styleUrl: './mis-citas.component.scss'
 })
@@ -34,6 +36,15 @@ export class MisCitasComponent implements OnInit {
   cargando: boolean = false;
   cancelando: boolean = false;
   citaSeleccionada: Cita | null = null;
+
+  // Variables para la gestión de reprogramación de citas por pacientes
+  mostrarFormularioReprogramar = false;
+  citaAReprogramar: Cita | null = null;
+  nuevaFecha = '';
+  nuevaHora = '';
+  motivoReprogramacion = '';
+  horariosDisponibles: string[] = [];
+  cargandoHorarios = false;
 
   private URL_BASE = 'http://localhost:8081/api';
 
@@ -168,5 +179,144 @@ export class MisCitasComponent implements OnInit {
         this.cancelando = false;
       }
     });
+  }
+
+  // ========= GESTIÓN DE CITAS POR PARTE DEL PACIENTE =========
+
+  solicitarReprogramacion(cita: Cita): void {
+    this.citaAReprogramar = cita;
+    this.mostrarFormularioReprogramar = true;
+    this.horariosDisponibles = [];
+    this.nuevaHora = '';
+
+    // Prellenar con fecha/hora actual + 1 día como sugerencia
+    const manana = new Date();
+    manana.setDate(manana.getDate() + 1);
+    this.nuevaFecha = manana.toISOString().split('T')[0];
+
+    // Cargar horarios disponibles para la fecha por defecto
+    this.cargarHorariosDisponibles();
+  }
+
+  confirmarReprogramacion(): void {
+    if (!this.citaAReprogramar || !this.nuevaFecha || !this.nuevaHora) {
+      this.error = 'Todos los campos son requeridos';
+      return;
+    }
+
+    this.cargando = true;
+    this.error = '';
+
+    const datos = {
+      nuevaFecha: this.nuevaFecha,
+      nuevaHora: this.nuevaHora,
+      motivo: this.motivoReprogramacion || 'Solicitud de reprogramación por el paciente',
+      correoUsuario: this.auth.obtenerCorreo()
+    };
+
+    this.http.post(`${this.URL_BASE}/citas/${this.citaAReprogramar.id}/solicitar-reprogramacion`, datos)
+      .subscribe({
+        next: (response: any) => {
+          this.mensaje = response.mensaje || 'Cita reprogramada exitosamente';
+          this.mostrarFormularioReprogramar = false;
+          this.cargarCitas(); // Recargar la lista de citas
+          this.limpiarFormularioReprogramacion();
+        },
+        error: (error) => {
+          this.error = error.error?.error || 'Error al reprogramar la cita';
+        },
+        complete: () => {
+          this.cargando = false;
+        }
+      });
+  }
+
+  cancelarCitaPaciente(cita: Cita): void {
+    const motivo = prompt('¿Por qué motivo desea cancelar la cita? (opcional)');
+
+    if (motivo === null) {
+      return; // Usuario canceló el prompt
+    }
+
+    if (!confirm('¿Está seguro de que desea cancelar esta cita?')) {
+      return;
+    }
+
+    this.cancelando = true;
+    this.error = '';
+
+    const datos = {
+      motivo: motivo || 'Cancelación solicitada por el paciente',
+      correoUsuario: this.auth.obtenerCorreo()
+    };
+
+    this.http.put(`${this.URL_BASE}/citas/${cita.id}/cancelar-paciente`, datos)
+      .subscribe({
+        next: (response: any) => {
+          this.mensaje = response.mensaje || 'Cita cancelada exitosamente';
+          this.cargarCitas(); // Recargar la lista de citas
+        },
+        error: (error) => {
+          this.error = error.error?.error || 'Error al cancelar la cita';
+        },
+        complete: () => {
+          this.cancelando = false;
+        }
+      });
+  }
+
+  cancelarReprogramacion(): void {
+    this.mostrarFormularioReprogramar = false;
+    this.limpiarFormularioReprogramacion();
+  }
+
+  private limpiarFormularioReprogramacion(): void {
+    this.citaAReprogramar = null;
+    this.nuevaFecha = '';
+    this.nuevaHora = '';
+    this.motivoReprogramacion = '';
+    this.horariosDisponibles = [];
+  }
+
+  onFechaChange(): void {
+    if (this.nuevaFecha && this.citaAReprogramar) {
+      this.nuevaHora = ''; // Resetear hora seleccionada
+      this.cargarHorariosDisponibles();
+    }
+  }
+
+  cargarHorariosDisponibles(): void {
+    if (!this.citaAReprogramar || !this.nuevaFecha) {
+      return;
+    }
+
+    this.cargandoHorarios = true;
+    this.horariosDisponibles = [];
+
+    // Extraer el ID del doctor de la cita
+    const doctorId = this.obtenerDoctorId(this.citaAReprogramar);
+
+    this.http.get(`${this.URL_BASE}/citas/doctor/${doctorId}/horarios-disponibles?fecha=${this.nuevaFecha}`)
+      .subscribe({
+        next: (response: any) => {
+          this.horariosDisponibles = response.horarios || [];
+          if (this.horariosDisponibles.length === 0) {
+            this.error = 'No hay horarios disponibles para esta fecha';
+          } else {
+            this.error = '';
+          }
+        },
+        error: (error) => {
+          this.error = 'Error al cargar horarios disponibles';
+          this.horariosDisponibles = [];
+        },
+        complete: () => {
+          this.cargandoHorarios = false;
+        }
+      });
+  }
+
+  private obtenerDoctorId(cita: Cita): number {
+    return cita.doctorId;
   }
 }
