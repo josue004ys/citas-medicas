@@ -6,7 +6,7 @@ import { Observable, catchError, throwError } from 'rxjs';
 export class CitaService {
   private URL = 'http://localhost:8081/api/citas';
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   // Verificar disponibilidad de cita
   verificarDisponibilidad(fecha: string, hora: string, doctorId: number): Observable<any> {
@@ -14,9 +14,9 @@ export class CitaService {
       .set('fecha', fecha)
       .set('hora', hora)
       .set('doctorId', doctorId.toString());
-    
+
     console.log('🔍 Verificando disponibilidad:', { fecha, hora, doctorId });
-    
+
     return this.http.get<any>(`${this.URL}/disponible`, { params }).pipe(
       catchError(error => {
         console.error('❌ Error en verificarDisponibilidad:', error);
@@ -25,10 +25,10 @@ export class CitaService {
     );
   }
 
-  // Agendar cita (método principal que funciona con el backend)
+  // Agendar cita 
   agendarCita(solicitud: any): Observable<any> {
     console.log('📅 Agendando cita:', solicitud);
-    
+
     return this.http.post(`${this.URL}/agendar`, solicitud).pipe(
       catchError(error => {
         console.error('❌ Error en agendarCita:', error);
@@ -79,8 +79,8 @@ export class CitaService {
 
   // Cancelar cita
   cancelarCita(id: number, motivo: string = 'Cancelación por el usuario'): Observable<any> {
-    return this.http.delete(`${this.URL}/${id}`, { 
-      body: { motivo } 
+    return this.http.delete(`${this.URL}/${id}`, {
+      body: { motivo }
     }).pipe(
       catchError(error => {
         console.error('❌ Error en cancelarCita:', error);

@@ -29,11 +29,15 @@ export class AgendarCitaComponent implements OnInit {
   fechaSeleccionada: string = '';
   doctorSeleccionado: number | null = null;
 
+  // Nueva propiedad para días disponibles
+  diasDisponibles: string[] = [];
+  cargandoDias: boolean = false;
+
   doctores: Doctor[] = [];
   especialidades: string[] = [];
 
-  // Horarios posibles para verificar disponibilidad
-  todosLosHorarios: HorarioOption[] = [
+  // Horarios base para formateo de texto (mantenido para getHorarioTexto)
+  private todosLosHorarios: HorarioOption[] = [
     { valor: '08:00', texto: '8:00 AM' },
     { valor: '09:00', texto: '9:00 AM' },
     { valor: '10:00', texto: '10:00 AM' },
@@ -151,13 +155,22 @@ export class AgendarCitaComponent implements OnInit {
     // Observar cambios en el doctor para cargar horarios
     this.form.get('doctorId')?.valueChanges.subscribe(doctorId => {
       this.doctorSeleccionado = doctorId ? parseInt(doctorId) : null;
-      if (this.doctorSeleccionado && this.fechaSeleccionada) {
-        this.cargarHorariosDisponibles(this.fechaSeleccionada);
+      if (this.doctorSeleccionado) {
+        // Cargar días disponibles cuando se selecciona un doctor
+        this.cargarDiasDisponibles();
+
+        if (this.fechaSeleccionada) {
+          this.cargarHorariosDisponibles(this.fechaSeleccionada);
+        }
       } else {
         this.horariosDisponibles = [];
+        this.diasDisponibles = [];
       }
       // Limpiar hora seleccionada cuando cambia el doctor
       this.form.get('hora')?.setValue('');
+      // Limpiar fecha cuando cambia el doctor para forzar nueva selección
+      this.form.get('fecha')?.setValue('');
+      this.fechaSeleccionada = '';
     });
 
     // Observar cambios en la fecha para cargar horarios disponibles
@@ -185,38 +198,27 @@ export class AgendarCitaComponent implements OnInit {
       },
       error: (error) => {
         console.error('❌ Error al cargar horarios:', error);
-        // Fallback: usar método de verificación individual
-        this.cargarHorariosDisponiblesIndividual(fecha);
+        this.horariosDisponibles = [];
+        this.cargandoHorarios = false;
       }
     });
   }
 
-  // Método de respaldo: verificar horarios individualmente
-  cargarHorariosDisponiblesIndividual(fecha: string) {
-    if (!this.doctorSeleccionado) {
-      this.horariosDisponibles = [];
-      this.cargandoHorarios = false;
-      return;
-    }
+  cargarDiasDisponibles() {
+    if (!this.doctorSeleccionado) return;
 
-    const verificaciones = this.todosLosHorarios.map(horario =>
-      this.citaService.verificarDisponibilidad(fecha, horario.valor, this.doctorSeleccionado!)
-        .toPromise()
-        .then(disponible => ({ horario: horario.valor, disponible }))
-        .catch(() => ({ horario: horario.valor, disponible: false }))
-    );
-
-    Promise.all(verificaciones).then(resultados => {
-      this.horariosDisponibles = resultados
-        .filter(resultado => resultado.disponible)
-        .map(resultado => resultado.horario);
-
-      console.log('✅ Horarios disponibles (método individual):', this.horariosDisponibles);
-      this.cargandoHorarios = false;
-    }).catch(error => {
-      console.error('❌ Error al cargar horarios (método individual):', error);
-      this.horariosDisponibles = [];
-      this.cargandoHorarios = false;
+    this.cargandoDias = true;
+    this.doctorService.obtenerDiasDisponibles(this.doctorSeleccionado).subscribe({
+      next: (response: any) => {
+        this.diasDisponibles = response.diasDisponibles || [];
+        this.cargandoDias = false;
+        console.log('✅ Días disponibles:', this.diasDisponibles);
+      },
+      error: (error) => {
+        console.error('❌ Error al cargar días disponibles:', error);
+        this.diasDisponibles = [];
+        this.cargandoDias = false;
+      }
     });
   }
 
@@ -309,23 +311,7 @@ export class AgendarCitaComponent implements OnInit {
     return `${hora12}:${minutos} ${ampm}`;
   }
 
-  esHorarioDisponible(hora: string): boolean {
-    return this.horariosDisponibles.includes(hora);
-  }
-
   obtenerDoctorSeleccionado(): Doctor | null {
     return this.doctores.find(d => d.id === this.doctorSeleccionado) || null;
-  }
-
-  get esAsistente(): boolean {
-    return this.auth.esAsistente();
-  }
-
-  get esPaciente(): boolean {
-    return this.auth.esPaciente();
-  }
-
-  get esDoctor(): boolean {
-    return this.auth.esDoctor();
   }
 }

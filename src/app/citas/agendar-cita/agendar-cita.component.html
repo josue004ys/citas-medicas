@@ -10,7 +10,7 @@
       </h3>
     </div>
     <div class="card-body">
-      
+
       <!-- Formulario para asistentes: pueden agendar para otros pacientes -->
       <div *ngIf="auth.esAsistente()" class="alert alert-info mb-3">
         <i class="fas fa-info-circle me-2"></i>
@@ -18,17 +18,18 @@
       </div>
 
       <form [formGroup]="form" (ngSubmit)="onSubmit()">
-        
-        <!-- Campos del paciente (solo para asistentes) -->
+
+        <!-- Campos del paciente-->
         <div *ngIf="auth.esAsistente()" class="row mb-3">
           <div class="col-md-6">
             <label for="correoPaciente" class="form-label">
               <i class="fas fa-envelope me-1"></i>
               Correo del Paciente *
             </label>
-            <input type="email" id="correoPaciente" formControlName="correoPaciente" 
-                   class="form-control" placeholder="Ingrese el correo del paciente">
-            <div *ngIf="form.get('correoPaciente')?.invalid && form.get('correoPaciente')?.touched" class="text-danger mt-1">
+            <input type="email" id="correoPaciente" formControlName="correoPaciente" class="form-control"
+              placeholder="Ingrese el correo del paciente">
+            <div *ngIf="form.get('correoPaciente')?.invalid && form.get('correoPaciente')?.touched"
+              class="text-danger mt-1">
               <small>Ingrese un correo válido del paciente</small>
             </div>
           </div>
@@ -37,15 +38,16 @@
               <i class="fas fa-user me-1"></i>
               Nombre del Paciente *
             </label>
-            <input type="text" id="nombrePaciente" formControlName="nombrePaciente" 
-                   class="form-control" placeholder="Ingrese el nombre completo">
-            <div *ngIf="form.get('nombrePaciente')?.invalid && form.get('nombrePaciente')?.touched" class="text-danger mt-1">
+            <input type="text" id="nombrePaciente" formControlName="nombrePaciente" class="form-control"
+              placeholder="Ingrese el nombre completo">
+            <div *ngIf="form.get('nombrePaciente')?.invalid && form.get('nombrePaciente')?.touched"
+              class="text-danger mt-1">
               <small>El nombre del paciente es requerido</small>
             </div>
           </div>
         </div>
 
-        <!-- Filtro por especialidad -->
+        <!-- Filtro por especialidad (opcional) -->
         <div class="mb-3">
           <label for="especialidad" class="form-label">
             <i class="fas fa-stethoscope me-1"></i>
@@ -57,6 +59,10 @@
               {{ especialidad }}
             </option>
           </select>
+          <small class="text-muted">
+            <i class="fas fa-info-circle me-1"></i>
+            Seleccione una especialidad para filtrar doctores específicos
+          </small>
         </div>
 
         <!-- Selección de doctor -->
@@ -84,7 +90,25 @@
           <h6><i class="fas fa-user-md me-2"></i>Doctor Seleccionado:</h6>
           <p class="mb-1"><strong>{{ obtenerDoctorSeleccionado()?.nombre }}</strong></p>
           <p class="mb-1">Especialidad: {{ obtenerDoctorSeleccionado()?.especialidad }}</p>
-          <p class="mb-0 text-muted">Teléfono: {{ obtenerDoctorSeleccionado()?.telefono }}</p>
+          <p class="mb-1 text-muted">Teléfono: {{ obtenerDoctorSeleccionado()?.telefono }}</p>
+
+          <!-- Mostrar días disponibles -->
+          <div *ngIf="diasDisponibles.length > 0" class="mt-2">
+            <h6 class="text-primary"><i class="fas fa-calendar-week me-1"></i>Días disponibles:</h6>
+            <div class="d-flex flex-wrap gap-1">
+              <span *ngFor="let dia of diasDisponibles" class="badge bg-primary rounded-pill">
+                {{ dia }}
+              </span>
+            </div>
+            <small class="text-muted mt-1 d-block">
+              <i class="fas fa-info-circle me-1"></i>
+              Solo puede agendar citas en estos días
+            </small>
+          </div>
+
+          <div *ngIf="cargandoDias" class="mt-2 text-info">
+            <small><i class="fas fa-spinner fa-spin me-1"></i>Cargando días disponibles...</small>
+          </div>
         </div>
 
         <!-- Fecha y hora -->
@@ -93,9 +117,11 @@
             <label for="fecha" class="form-label">
               <i class="fas fa-calendar me-1"></i>
               Fecha *
+              <span *ngIf="doctorSeleccionado && diasDisponibles.length > 0" class="text-muted">
+                (Solo {{ diasDisponibles.join(', ') }})
+              </span>
             </label>
-            <input type="date" id="fecha" formControlName="fecha" class="form-control" 
-                   [min]="getMinDate()">
+            <input type="date" id="fecha" formControlName="fecha" class="form-control" [min]="getMinDate()">
             <div *ngIf="form.get('fecha')?.invalid && form.get('fecha')?.touched" class="text-danger mt-1">
               <small>La fecha es requerida</small>
             </div>
@@ -110,12 +136,12 @@
                 Cargando...
               </span>
             </label>
-            <select id="hora" formControlName="hora" class="form-select" 
-                    [disabled]="!fechaSeleccionada || !doctorSeleccionado || cargandoHorarios">
+            <select id="hora" formControlName="hora" class="form-select"
+              [disabled]="!fechaSeleccionada || !doctorSeleccionado || cargandoHorarios">
               <option value="">
-                {{ !doctorSeleccionado ? 'Primero seleccione un doctor' : 
-                   !fechaSeleccionada ? 'Primero seleccione una fecha' : 
-                   'Seleccione una hora' }}
+                {{ !doctorSeleccionado ? 'Primero seleccione un doctor' :
+                !fechaSeleccionada ? 'Primero seleccione una fecha' :
+                'Seleccione una hora' }}
               </option>
               <option *ngFor="let horario of horariosDisponibles" [value]="horario">
                 {{ getHorarioTexto(horario) }}
@@ -124,7 +150,7 @@
             <div *ngIf="form.get('hora')?.invalid && form.get('hora')?.touched" class="text-danger mt-1">
               <small>La hora es requerida</small>
             </div>
-            
+
             <!-- Mostrar información de disponibilidad -->
             <div *ngIf="fechaSeleccionada && doctorSeleccionado && !cargandoHorarios" class="mt-2">
               <small class="text-muted">
@@ -147,10 +173,10 @@
             <i class="fas fa-notes-medical me-1"></i>
             Motivo de la Consulta *
           </label>
-          <textarea id="motivoConsulta" formControlName="motivoConsulta" 
-                    class="form-control" rows="3" 
-                    placeholder="Describa brevemente el motivo de la consulta médica (mínimo 10 caracteres)"></textarea>
-          <div *ngIf="form.get('motivoConsulta')?.invalid && form.get('motivoConsulta')?.touched" class="text-danger mt-1">
+          <textarea id="motivoConsulta" formControlName="motivoConsulta" class="form-control" rows="3"
+            placeholder="Describa brevemente el motivo de la consulta médica (mínimo 10 caracteres)"></textarea>
+          <div *ngIf="form.get('motivoConsulta')?.invalid && form.get('motivoConsulta')?.touched"
+            class="text-danger mt-1">
             <small>El motivo de la consulta es requerido (mínimo 10 caracteres)</small>
           </div>
         </div>

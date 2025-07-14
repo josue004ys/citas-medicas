@@ -8,7 +8,6 @@ export class AuthService {
   private currentUser: any = null;
 
   constructor(private http: HttpClient, private router: Router) {
-    // Recuperar usuario del localStorage si existe
     const savedUser = localStorage.getItem('currentUser');
     if (savedUser) {
       try {
