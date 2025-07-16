@@ -247,6 +247,31 @@ export class GestionarCitasDoctorComponent implements OnInit {
         this.reasignarForm.reset();
     }
 
+    // ========= CONFIRMAR CITA =========
+    confirmarCita(cita: Cita): void {
+        // Confirmar acción
+        if (!confirm(`¿Está seguro de confirmar la cita con ${cita.pacienteNombre}?`)) {
+            return;
+        }
+
+        this.isLoading = true;
+
+        this.http.put(`${this.URL_BASE}/citas/${cita.id}/confirmar`, {})
+            .subscribe({
+                next: (response: any) => {
+                    this.mensaje = `Cita confirmada exitosamente. El paciente ${cita.pacienteNombre} ha sido notificado.`;
+                    this.cargarCitas();
+                    this.isLoading = false;
+                },
+                error: (error) => {
+                    console.error('Error al confirmar cita:', error);
+                    this.error = 'Error al confirmar la cita: ' + (error.error?.error || error.message);
+                    this.isLoading = false;
+                }
+            });
+    }
+
+    // ========= MÉTODOS DE UTILIDAD =========
     formatDate(fechaHora: string): string {
         const fecha = new Date(fechaHora);
         return fecha.toLocaleDateString('es-ES', {
@@ -269,7 +294,10 @@ export class GestionarCitasDoctorComponent implements OnInit {
         switch (estado) {
             case 'CONFIRMADA': return 'badge bg-success';
             case 'PENDIENTE': return 'badge bg-warning text-dark';
+            case 'PROGRAMADA': return 'badge bg-info';
+            case 'ATENDIDA': return 'badge bg-primary';
             case 'CANCELADA': return 'badge bg-danger';
+            case 'NO_ASISTIO': return 'badge bg-secondary';
             default: return 'badge bg-secondary';
         }
     }

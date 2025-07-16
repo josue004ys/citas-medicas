@@ -74,6 +74,13 @@
 
                             <!-- Acciones -->
                             <div class="d-flex flex-wrap gap-2">
+                                <!-- Botón de confirmar (solo para citas pendientes o no confirmadas) -->
+                                <button *ngIf="cita.estado === 'PENDIENTE' || cita.estado === 'PROGRAMADA'"
+                                    class="btn btn-sm btn-success" (click)="confirmarCita(cita)" title="Confirmar cita">
+                                    <i class="fas fa-check me-1"></i>
+                                    Confirmar
+                                </button>
+
                                 <button class="btn btn-sm btn-outline-warning" (click)="abrirModalReprogramar(cita)"
                                     title="Reprogramar cita">
                                     <i class="fas fa-calendar-alt me-1"></i>
