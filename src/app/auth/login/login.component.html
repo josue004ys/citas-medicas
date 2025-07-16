@@ -4,10 +4,7 @@
 
       <!-- Header del sistema -->
       <div class="text-center mb-4">
-        <div class="mb-3">
-          <i class="fas fa-hospital-alt fa-3x text-primary mb-2"></i>
-        </div>
-        <h2 class="fw-bold text-primary mb-2">Sistema de Citas Médicas</h2>
+        <h2 class="fw-bold text-primary">🏥 Sistema de Citas Médicas</h2>
         <p class="text-muted">Ingresa a tu cuenta para continuar</p>
       </div>
 
@@ -16,19 +13,19 @@
         <li class="nav-item" role="presentation">
           <button class="nav-link" [class.active]="tipoLogin === 'paciente'" type="button" role="tab"
             (click)="cambiarTipoLogin('paciente')">
-            <i class="fas fa-user me-2"></i>Pacientes
+            👤 Pacientes
           </button>
         </li>
         <li class="nav-item" role="presentation">
           <button class="nav-link" [class.active]="tipoLogin === 'personal'" type="button" role="tab"
             (click)="cambiarTipoLogin('personal')">
-            <i class="fas fa-user-md me-2"></i>Personal
+            👨‍⚕️ Personal
           </button>
         </li>
         <li class="nav-item" role="presentation">
           <button class="nav-link" [class.active]="tipoLogin === 'admin'" type="button" role="tab"
             (click)="cambiarTipoLogin('admin')">
-            <i class="fas fa-cog me-2"></i>Admin
+            🔧 Admin
           </button>
         </li>
       </ul>
@@ -39,67 +36,65 @@
 
           <!-- Login para Pacientes -->
           <div *ngIf="tipoLogin === 'paciente'">
-            <div class="text-center mb-4">
-              <i class="fas fa-user-circle fa-2x text-primary mb-2"></i>
-              <h4 class="card-title text-primary mb-2">Portal de Pacientes</h4>
-              <p class="text-muted">Gestiona tus citas médicas</p>
-            </div>
+            <h4 class="card-title text-center mb-3 text-primary">
+              👤 Portal de Pacientes
+            </h4>
+            <p class="text-muted text-center mb-4">Gestiona tus citas médicas</p>
           </div>
 
           <!-- Login para Personal Médico -->
           <div *ngIf="tipoLogin === 'personal'">
-            <div class="text-center mb-4">
-              <i class="fas fa-stethoscope fa-2x text-success mb-2"></i>
-              <h4 class="card-title text-success mb-2">Portal Médico</h4>
-              <p class="text-muted">Acceso para personal sanitario</p>
-            </div>
+            <h4 class="card-title text-center mb-3 text-success">
+              👨‍⚕️ Portal Médico
+            </h4>
+            <p class="text-muted text-center mb-4">Acceso para personal sanitario</p>
 
             <div class="alert alert-info alert-sm">
-              <i class="fas fa-info-circle me-2"></i>
-              <strong>Nota:</strong> Para crear nuevos usuarios médicos, use el panel de administración.
+              <small><strong>Nota:</strong> Para crear nuevos usuarios médicos, use el panel de administración.</small>
             </div>
           </div>
 
           <!-- Login para Administradores -->
           <div *ngIf="tipoLogin === 'admin'">
-            <div class="text-center mb-4">
-              <i class="fas fa-shield-alt fa-2x text-warning mb-2"></i>
-              <h4 class="card-title text-warning mb-2">Panel de Administración</h4>
-              <p class="text-muted">Gestión del sistema</p>
-            </div>
+            <h4 class="card-title text-center mb-3 text-warning">
+              🔧 Panel de Administración
+            </h4>
+            <p class="text-muted text-center mb-4">Gestión del sistema</p>
+
+
           </div>
 
           <!-- Formulario de login -->
           <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
             <div class="mb-3">
               <label for="correo" class="form-label">
-                <i class="fas fa-envelope me-2"></i>Correo Electrónico
+                📧 Correo Electrónico
               </label>
               <input formControlName="correo" type="email" id="correo" class="form-control"
                 [class.is-invalid]="loginForm.get('correo')?.invalid && loginForm.get('correo')?.touched"
-                placeholder="tu@email.com">
+                placeholder="tu&#64;email.com">
               <div *ngIf="loginForm.get('correo')?.invalid && loginForm.get('correo')?.touched"
                 class="invalid-feedback">
-                <small><i class="fas fa-exclamation-triangle me-1"></i>Ingrese un correo válido</small>
+                <small>Ingrese un correo válido</small>
               </div>
             </div>
 
             <div class="mb-3">
               <label for="password" class="form-label">
-                <i class="fas fa-lock me-2"></i>Contraseña
+                🔒 Contraseña
               </label>
               <input formControlName="password" type="password" id="password" class="form-control"
                 [class.is-invalid]="loginForm.get('password')?.invalid && loginForm.get('password')?.touched"
                 placeholder="Tu contraseña">
               <div *ngIf="loginForm.get('password')?.invalid && loginForm.get('password')?.touched"
                 class="invalid-feedback">
-                <small><i class="fas fa-exclamation-triangle me-1"></i>Mínimo 4 caracteres</small>
+                <small>Mínimo 4 caracteres</small>
               </div>
             </div>
 
             <!-- Mostrar errores -->
             <div *ngIf="error" class="alert alert-danger" role="alert">
-              <i class="fas fa-exclamation-triangle me-2"></i>{{ error }}
+              ⚠️ {{ error }}
             </div>
 
             <!-- Botón de login dinámico según tipo -->
@@ -114,7 +109,7 @@
             <div *ngIf="tipoLogin === 'paciente'" class="text-center">
               <hr>
               <button type="button" class="btn btn-link" routerLink="/registro">
-                <i class="fas fa-user-plus me-2"></i>¿No tienes cuenta? Regístrate
+                ➕ ¿No tienes cuenta? Regístrate
               </button>
             </div>
           </form>
@@ -125,7 +120,7 @@
       <div class="text-center mt-4">
         <small class="text-muted">
           <a routerLink="/admin-setup" class="text-decoration-none">
-            <i class="fas fa-tools me-1"></i>Configuración inicial del sistema
+            🔧 Configuración inicial del sistema
           </a>
         </small>
       </div>
