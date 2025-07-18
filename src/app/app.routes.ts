@@ -4,6 +4,7 @@ import { LoginComponent } from './auth/login/login.component';
 import { RegistroComponent } from './auth/registro/registro.component';
 import { AgendarCitaComponent } from './citas/agendar-cita/agendar-cita.component';
 import { MisCitasComponent } from './citas/mis-citas/mis-citas.component';
+import { AdminGuard } from './core/guards/admin.guard';
 import { AuthGuard } from './core/guards/auth.guard';
 import { DashboardDoctorComponent } from './doctor/dashboard-doctor/dashboard-doctor.component';
 import { GestionarCitasDoctorComponent } from './doctor/gestionar-citas-doctor/gestionar-citas-doctor.component';
@@ -17,7 +18,7 @@ export const routes: Routes = [
   { path: 'home', component: HomeComponent, canActivate: [AuthGuard] },
 
   // Ruta para configuración inicial (solo para administradores)
-  { path: 'admin-setup', component: AdminSetupComponent },
+  { path: 'admin-setup', component: AdminSetupComponent, canActivate: [AdminGuard] },
 
   // Rutas para pacientes y asistentes
   { path: 'agendar', component: AgendarCitaComponent, canActivate: [AuthGuard] },

@@ -104,8 +104,8 @@ export class LoginComponent {
     switch (rol) {
       case 'ADMINISTRADOR':
       case 'DIRECTOR_MEDICO':
-        console.log('🔧 Redirigiendo a página principal...');
-        this.router.navigate(['/home']);
+        console.log('🔧 Redirigiendo a configuración del sistema...');
+        this.router.navigate(['/admin-setup']);
         break;
 
       case 'MEDICO':

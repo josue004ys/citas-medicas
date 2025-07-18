@@ -15,6 +15,9 @@ export class AppComponent {
   constructor(public auth: AuthService) { }
 
   obtenerRutaInicio(): string {
+    if (this.auth.esAdmin()) {
+      return '/admin-setup';
+    }
     if (this.auth.esDoctor()) {
       return '/doctor/dashboard';
     }

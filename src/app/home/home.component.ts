@@ -62,6 +62,22 @@ import { AuthService } from '../auth/auth.service';
                   </a>
                 </div>
               </div>
+
+              <div *ngIf="auth.esAdmin()">
+                <i class="fas fa-user-shield fa-4x text-warning mb-4"></i>
+                <h2 class="mb-3">Bienvenido, Administrador {{ auth.obtenerUsuario()?.nombre }}</h2>
+                <p class="lead text-muted mb-4">Configure y administre el sistema médico</p>
+                <div class="d-grid gap-2 d-md-block">
+                  <a routerLink="/admin-setup" class="btn btn-warning btn-lg me-2">
+                    <i class="fas fa-cog me-2"></i>
+                    Configuración del Sistema
+                  </a>
+                  <a routerLink="/admin-setup" class="btn btn-outline-warning btn-lg">
+                    <i class="fas fa-users-cog me-2"></i>
+                    Gestionar Especialidades
+                  </a>
+                </div>
+              </div>
             </div>
           </div>
 
