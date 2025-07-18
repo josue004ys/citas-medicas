@@ -89,6 +89,11 @@ export class AuthService {
     return this.obtenerRol() === 'PACIENTE';
   }
 
+  esAdmin(): boolean {
+    const rol = this.obtenerRol();
+    return rol === 'ADMINISTRADOR' || rol === 'DIRECTOR_MEDICO';
+  }
+
   esAsistente(): boolean {
     return this.obtenerRol() === 'ASISTENTE';
   }

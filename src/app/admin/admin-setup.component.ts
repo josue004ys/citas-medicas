@@ -2055,21 +2055,46 @@ export class AdminSetupComponent implements OnInit {
       return;
     }
 
+    // Verificar si la especialidad ya existe
+    const existeEspecialidad = this.especialidades.some(
+      esp => esp.nombre.toLowerCase() === this.nuevaEspecialidad.nombre.trim().toLowerCase()
+    );
+
+    if (existeEspecialidad) {
+      this.mostrarMensaje('Esta especialidad ya está registrada en el sistema.', true);
+      return;
+    }
+
     const especialidad = {
       nombre: this.nuevaEspecialidad.nombre.trim(),
       descripcion: this.nuevaEspecialidad.descripcion.trim(),
       activa: true
     };
 
+    console.log('🔄 Enviando especialidad al backend:', especialidad);
+
     this.http.post<Especialidad>('http://localhost:8081/api/especialidades', especialidad).subscribe({
       next: (nuevaEsp) => {
+        console.log('✅ Especialidad creada exitosamente:', nuevaEsp);
         this.especialidades.push(nuevaEsp);
         this.nuevaEspecialidad = { nombre: '', descripcion: '' };
         this.mostrarMensaje('✅ Especialidad agregada exitosamente', false);
       },
       error: (error) => {
         console.error('❌ Error al agregar especialidad:', error);
-        this.mostrarMensaje('Error al agregar especialidad', true);
+        let mensajeError = 'Error al agregar especialidad';
+
+        if (error.status === 0) {
+          mensajeError = '❌ No se puede conectar al servidor. Verifique que el backend esté ejecutándose en el puerto 8081.';
+        } else if (error.status === 400) {
+          mensajeError = '❌ Datos inválidos: ' + (error.error?.message || error.message);
+        } else if (error.status === 409) {
+          mensajeError = '❌ La especialidad ya existe en el sistema.';
+        } else if (error.status >= 500) {
+          mensajeError = '❌ Error interno del servidor. Revise los logs del backend.';
+        }
+
+        this.mostrarMensaje(mensajeError, true);
       }
     });
   }
