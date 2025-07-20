@@ -61,7 +61,7 @@ export class AgendarCitaComponent implements OnInit {
       doctorId: ['', Validators.required],
       fecha: ['', Validators.required],
       hora: ['', Validators.required],
-      motivoConsulta: [''] // Campo opcional, sin validaciones requeridas
+      motivoConsulta: [''] // Campo opcional
     };
 
     // Si es asistente, agregar campos para correo y nombre del paciente
