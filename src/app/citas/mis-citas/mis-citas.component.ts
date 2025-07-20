@@ -19,6 +19,8 @@ interface Cita {
   tratamiento?: string;
   observacionesDoctor?: string;
   tipoConsulta?: string;
+  numeroReprogramaciones?: number; // Número de veces que se ha reprogramado
+  ultimaReprogramacion?: string; // Fecha de la última reprogramación
 }
 
 @Component({
@@ -218,12 +220,29 @@ export class MisCitasComponent implements OnInit {
       .subscribe({
         next: (response: any) => {
           this.mensaje = response.mensaje || 'Cita reprogramada exitosamente';
+
+          // Mostrar información adicional si está disponible
+          if (response.reprogramacionesRestantes !== undefined) {
+            this.mensaje += ` (${response.reprogramacionesRestantes} reprogramaciones restantes para esta cita)`;
+          }
+
           this.mostrarFormularioReprogramar = false;
           this.cargarCitas(); // Recargar la lista de citas
           this.limpiarFormularioReprogramacion();
         },
         error: (error) => {
-          this.error = error.error?.error || 'Error al reprogramar la cita';
+          console.error('Error al reprogramar:', error);
+
+          // Manejar diferentes tipos de errores con mensajes específicos
+          if (error.error?.error) {
+            this.error = error.error.error;
+          } else if (error.status === 400) {
+            this.error = 'No se puede reprogramar esta cita. Verifique las restricciones.';
+          } else if (error.status === 0) {
+            this.error = 'Error de conexión. Verifique que el servidor esté funcionando.';
+          } else {
+            this.error = 'Error inesperado al reprogramar la cita. Intente nuevamente.';
+          }
         },
         complete: () => {
           this.cargando = false;
@@ -318,5 +337,47 @@ export class MisCitasComponent implements OnInit {
 
   private obtenerDoctorId(cita: Cita): number {
     return cita.doctorId;
+  }
+
+  /**
+   * Verificar si una cita puede ser reprogramada
+   */
+  puedeReprogramar(cita: Cita): boolean {
+    // Verificar si ya alcanzó el máximo de reprogramaciones (2)
+    if (cita.numeroReprogramaciones && cita.numeroReprogramaciones >= 2) {
+      return false;
+    }
+
+    // Verificar si la cita es en menos de 24 horas
+    const fechaHoraCita = new Date(cita.fechaHora);
+    const ahora = new Date();
+    const horasHastaCita = (fechaHoraCita.getTime() - ahora.getTime()) / (1000 * 60 * 60);
+
+    if (horasHastaCita < 24) {
+      return false;
+    }
+
+    return true;
+  }
+
+  /**
+   * Obtener mensaje explicativo sobre por qué no se puede reprogramar
+   */
+  obtenerMensajeReprogramacion(cita: Cita): string {
+    if (cita.numeroReprogramaciones && cita.numeroReprogramaciones >= 2) {
+      return 'Esta cita ya ha sido reprogramada el máximo de veces permitidas (2)';
+    }
+
+    const fechaHoraCita = new Date(cita.fechaHora);
+    const ahora = new Date();
+    const horasHastaCita = (fechaHoraCita.getTime() - ahora.getTime()) / (1000 * 60 * 60);
+
+    if (horasHastaCita < 24) {
+      const horasRestantes = Math.floor(horasHastaCita);
+      return `No se puede reprogramar con menos de 24 horas de anticipación. Quedan ${horasRestantes} horas.`;
+    }
+
+    const reprogramacionesRestantes = 2 - (cita.numeroReprogramaciones || 0);
+    return `Puede reprogramar esta cita ${reprogramacionesRestantes} vez(es) más`;
   }
 }

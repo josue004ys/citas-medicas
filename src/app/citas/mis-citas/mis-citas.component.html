@@ -86,9 +86,13 @@
 
                     <!-- Botones específicos para pacientes -->
                     <div *ngIf="auth.esPaciente() && (cita.estado === 'PENDIENTE' || cita.estado === 'CONFIRMADA')">
-                      <button class="btn btn-outline-warning btn-sm me-2" (click)="solicitarReprogramacion(cita)">
+                      <button class="btn btn-outline-warning btn-sm me-2" (click)="solicitarReprogramacion(cita)"
+                        [disabled]="!puedeReprogramar(cita)" [title]="obtenerMensajeReprogramacion(cita)">
                         <i class="fas fa-calendar-alt me-1"></i>
                         Reprogramar
+                        <span *ngIf="(cita.numeroReprogramaciones || 0) > 0" class="badge bg-warning text-dark ms-1">
+                          {{ cita.numeroReprogramaciones || 0 }}/2
+                        </span>
                       </button>
 
                       <button class="btn btn-outline-danger btn-sm" (click)="cancelarCitaPaciente(cita)"
@@ -200,6 +204,17 @@
           <button type="button" class="btn-close" (click)="cancelarReprogramacion()"></button>
         </div>
         <div class="modal-body">
+          <!-- Alerta informativa sobre restricciones -->
+          <div class="alert alert-warning" *ngIf="citaAReprogramar">
+            <h6><i class="fas fa-info-circle me-2"></i>Información importante:</h6>
+            <ul class="mb-0">
+              <li><strong>Reprogramaciones:</strong> {{ citaAReprogramar.numeroReprogramaciones || 0 }}/2 utilizadas
+              </li>
+              <li><strong>Tiempo mínimo:</strong> 24 horas de anticipación</li>
+              <li><strong>Límite mensual:</strong> Máximo 5 reprogramaciones por mes</li>
+            </ul>
+          </div>
+
           <div *ngIf="citaAReprogramar" class="mb-3">
             <div class="alert alert-info">
               <strong>Cita actual:</strong>

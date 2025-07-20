@@ -171,13 +171,13 @@
         <div class="mb-3">
           <label for="motivoConsulta" class="form-label">
             <i class="fas fa-notes-medical me-1"></i>
-            Motivo de la Consulta *
+            Motivo de la Consulta (Opcional)
           </label>
           <textarea id="motivoConsulta" formControlName="motivoConsulta" class="form-control" rows="3"
-            placeholder="Describa brevemente el motivo de la consulta médica (mínimo 10 caracteres)"></textarea>
+            placeholder="Describa brevemente el motivo de la consulta médica (opcional)"></textarea>
           <div *ngIf="form.get('motivoConsulta')?.invalid && form.get('motivoConsulta')?.touched"
             class="text-danger mt-1">
-            <small>El motivo de la consulta es requerido (mínimo 10 caracteres)</small>
+            <small>El motivo debe tener al menos 10 caracteres si se proporciona</small>
           </div>
         </div>
 

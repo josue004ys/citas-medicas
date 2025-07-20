@@ -61,7 +61,7 @@ export class AgendarCitaComponent implements OnInit {
       doctorId: ['', Validators.required],
       fecha: ['', Validators.required],
       hora: ['', Validators.required],
-      motivoConsulta: ['', [Validators.required, Validators.minLength(10)]]
+      motivoConsulta: [''] // Campo opcional, sin validaciones requeridas
     };
 
     // Si es asistente, agregar campos para correo y nombre del paciente
@@ -247,7 +247,7 @@ export class AgendarCitaComponent implements OnInit {
       doctorId: parseInt(doctorId),
       fecha,
       hora,
-      motivoConsulta,
+      motivoConsulta: motivoConsulta || '', // Enviar string vacío si no hay motivo
       // SIEMPRE incluir el correo del paciente
       correoPaciente: this.auth.esAsistente() && correoPaciente ? correoPaciente : correoUsuario,
       nombrePaciente: this.auth.esAsistente() && nombrePaciente ? nombrePaciente : this.auth.obtenerUsuario()?.nombre || 'Usuario'
