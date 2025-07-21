@@ -1,10 +1,11 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
+import { BASE_API } from '../core/config/api';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-  private URL = 'http://localhost:8081/api/auth';
+  private URL = `${BASE_API}/auth`;
   private currentUser: any = null;
 
   constructor(private http: HttpClient, private router: Router) {
@@ -63,7 +64,10 @@ export class AuthService {
     // Forma 2: como id (si el usuario es un doctor)
     else if (this.currentUser.id && this.esDoctor()) {
       doctorId = this.currentUser.id;
-      console.log('🔍 obtenerDoctorId: Encontrado como id (es doctor):', doctorId);
+      console.log(
+        '🔍 obtenerDoctorId: Encontrado como id (es doctor):',
+        doctorId
+      );
     }
 
     // Convertir a número si es string

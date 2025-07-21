@@ -1,9 +1,15 @@
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import {
+  FormBuilder,
+  FormGroup,
+  ReactiveFormsModule,
+  Validators,
+} from '@angular/forms';
 import { AuthService } from '../../auth/auth.service';
 import { HorarioDoctor, HorarioService } from '../../services/horario.service';
+import { BASE_API } from '../../core/config/api';
 
 @Component({
   selector: 'app-gestionar-horarios',
@@ -25,7 +31,7 @@ import { HorarioDoctor, HorarioService } from '../../services/horario.service';
           <div class="card">
             <div class="card-header bg-primary text-white">
               <h5 class="mb-0">
-                <i class="fas fa-plus"></i> 
+                <i class="fas fa-plus"></i>
                 {{ modoEdicion ? 'Editar Horario' : 'Nuevo Horario' }}
               </h5>
             </div>
@@ -46,7 +52,9 @@ import { HorarioDoctor, HorarioService } from '../../services/horario.service';
                     </select>
                   </div>
                   <div class="col-md-6 mb-3">
-                    <label class="form-label">Duración por cita (minutos)</label>
+                    <label class="form-label"
+                      >Duración por cita (minutos)</label
+                    >
                     <select class="form-select" formControlName="duracionCita">
                       <option value="15">15 minutos</option>
                       <option value="30">30 minutos</option>
@@ -58,19 +66,36 @@ import { HorarioDoctor, HorarioService } from '../../services/horario.service';
                 <div class="row">
                   <div class="col-md-6 mb-3">
                     <label class="form-label">Hora de inicio</label>
-                    <input type="time" class="form-control" formControlName="horaInicio">
+                    <input
+                      type="time"
+                      class="form-control"
+                      formControlName="horaInicio"
+                    />
                   </div>
                   <div class="col-md-6 mb-3">
                     <label class="form-label">Hora de fin</label>
-                    <input type="time" class="form-control" formControlName="horaFin">
+                    <input
+                      type="time"
+                      class="form-control"
+                      formControlName="horaFin"
+                    />
                   </div>
                 </div>
                 <div class="d-flex gap-2">
-                  <button type="submit" class="btn btn-primary" [disabled]="!horarioForm.valid || cargando">
+                  <button
+                    type="submit"
+                    class="btn btn-primary"
+                    [disabled]="!horarioForm.valid || cargando"
+                  >
                     <i class="fas fa-save"></i>
                     {{ modoEdicion ? 'Actualizar' : 'Crear' }}
                   </button>
-                  <button type="button" class="btn btn-secondary" (click)="cancelarEdicion()" *ngIf="modoEdicion">
+                  <button
+                    type="button"
+                    class="btn btn-secondary"
+                    (click)="cancelarEdicion()"
+                    *ngIf="modoEdicion"
+                  >
                     <i class="fas fa-times"></i> Cancelar
                   </button>
                 </div>
@@ -101,17 +126,33 @@ import { HorarioDoctor, HorarioService } from '../../services/horario.service';
                     <tr *ngFor="let dia of diasSemana">
                       <td>{{ dia.nombre }}</td>
                       <td>
-                        <div *ngFor="let horario of obtenerHorariosPorDia(dia.valor)" class="small">
+                        <div
+                          *ngFor="
+                            let horario of obtenerHorariosPorDia(dia.valor)
+                          "
+                          class="small"
+                        >
                           {{ horario.horaInicio }} - {{ horario.horaFin }}
-                          <span class="badge bg-secondary ms-1">{{ horario.duracionCita }}min</span>
+                          <span class="badge bg-secondary ms-1"
+                            >{{ horario.duracionCita }}min</span
+                          >
                         </div>
-                        <span *ngIf="obtenerHorariosPorDia(dia.valor).length === 0" class="text-muted">
+                        <span
+                          *ngIf="obtenerHorariosPorDia(dia.valor).length === 0"
+                          class="text-muted"
+                        >
                           Sin horarios
                         </span>
                       </td>
                       <td>
-                        <span *ngFor="let horario of obtenerHorariosPorDia(dia.valor)" 
-                              [class]="'badge me-1 ' + obtenerClasseEstado(horario.estado)">
+                        <span
+                          *ngFor="
+                            let horario of obtenerHorariosPorDia(dia.valor)
+                          "
+                          [class]="
+                            'badge me-1 ' + obtenerClasseEstado(horario.estado)
+                          "
+                        >
                           {{ horario.estado }}
                         </span>
                       </td>
@@ -139,7 +180,10 @@ import { HorarioDoctor, HorarioService } from '../../services/horario.service';
                 <p>Cargando horarios...</p>
               </div>
 
-              <div *ngIf="!cargandoHorarios && horarios.length === 0" class="text-center text-muted">
+              <div
+                *ngIf="!cargandoHorarios && horarios.length === 0"
+                class="text-center text-muted"
+              >
                 <i class="fas fa-calendar-times fa-3x mb-3"></i>
                 <h5>No tienes horarios configurados</h5>
                 <p>Comienza agregando tu primer horario de atención</p>
@@ -165,34 +209,61 @@ import { HorarioDoctor, HorarioService } from '../../services/horario.service';
                           {{ obtenerNombreDia(horario.dia) }}
                         </td>
                         <td>
-                          <strong>{{ horario.horaInicio }} - {{ horario.horaFin }}</strong>
+                          <strong
+                            >{{ horario.horaInicio }} -
+                            {{ horario.horaFin }}</strong
+                          >
                         </td>
                         <td>
-                          <span class="badge bg-info">{{ horario.duracionCita }} min</span>
+                          <span class="badge bg-info"
+                            >{{ horario.duracionCita }} min</span
+                          >
                         </td>
                         <td>
-                          <span [class]="'badge ' + obtenerClasseEstado(horario.estado)">
+                          <span
+                            [class]="
+                              'badge ' + obtenerClasseEstado(horario.estado)
+                            "
+                          >
                             {{ horario.estado }}
                           </span>
                         </td>
                         <td>
-                          <small class="text-muted">{{ horario.observaciones || '-' }}</small>
+                          <small class="text-muted">{{
+                            horario.observaciones || '-'
+                          }}</small>
                         </td>
                         <td>
                           <div class="btn-group btn-group-sm">
-                            <button class="btn btn-outline-primary" 
-                                    (click)="editarHorario(horario)"
-                                    title="Editar">
+                            <button
+                              class="btn btn-outline-primary"
+                              (click)="editarHorario(horario)"
+                              title="Editar"
+                            >
                               <i class="fas fa-edit"></i>
                             </button>
-                            <button class="btn btn-outline-warning" 
-                                    (click)="toggleEstadoHorario(horario)"
-                                    [title]="horario.estado === 'ACTIVO' ? 'Bloquear' : 'Activar'">
-                              <i [class]="horario.estado === 'ACTIVO' ? 'fas fa-lock' : 'fas fa-unlock'"></i>
+                            <button
+                              class="btn btn-outline-warning"
+                              (click)="toggleEstadoHorario(horario)"
+                              [title]="
+                                horario.estado === 'ACTIVO'
+                                  ? 'Bloquear'
+                                  : 'Activar'
+                              "
+                            >
+                              <i
+                                [class]="
+                                  horario.estado === 'ACTIVO'
+                                    ? 'fas fa-lock'
+                                    : 'fas fa-unlock'
+                                "
+                              ></i>
                             </button>
-                            <button class="btn btn-outline-danger" 
-                                    (click)="eliminarHorario(horario)"
-                                    title="Eliminar">
+                            <button
+                              class="btn btn-outline-danger"
+                              (click)="eliminarHorario(horario)"
+                              title="Eliminar"
+                            >
                               <i class="fas fa-trash"></i>
                             </button>
                           </div>
@@ -208,40 +279,50 @@ import { HorarioDoctor, HorarioService } from '../../services/horario.service';
       </div>
 
       <!-- Alertas -->
-      <div *ngIf="mensaje" class="alert alert-success alert-dismissible fade show" role="alert">
+      <div
+        *ngIf="mensaje"
+        class="alert alert-success alert-dismissible fade show"
+        role="alert"
+      >
         <i class="fas fa-check-circle"></i> {{ mensaje }}
         <button type="button" class="btn-close" (click)="mensaje = ''"></button>
       </div>
 
-      <div *ngIf="error" class="alert alert-danger alert-dismissible fade show" role="alert">
+      <div
+        *ngIf="error"
+        class="alert alert-danger alert-dismissible fade show"
+        role="alert"
+      >
         <i class="fas fa-exclamation-triangle"></i> {{ error }}
         <button type="button" class="btn-close" (click)="error = ''"></button>
       </div>
     </div>
   `,
-  styles: [`
-    .card {
-      box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
-      border: 1px solid rgba(0, 0, 0, 0.125);
-    }
-    
-    .btn-group-sm .btn {
-      padding: 0.25rem 0.5rem;
-    }
-    
-    .table th {
-      border-top: none;
-    }
-    
-    .spinner-border {
-      width: 3rem;
-      height: 3rem;
-    }
+  styles: [
+    `
+      .card {
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        border: 1px solid rgba(0, 0, 0, 0.125);
+      }
 
-    .badge {
-      font-size: 0.75em;
-    }
-  `]
+      .btn-group-sm .btn {
+        padding: 0.25rem 0.5rem;
+      }
+
+      .table th {
+        border-top: none;
+      }
+
+      .spinner-border {
+        width: 3rem;
+        height: 3rem;
+      }
+
+      .badge {
+        font-size: 0.75em;
+      }
+    `,
+  ],
 })
 export class GestionarHorariosComponent implements OnInit {
   horarioForm: FormGroup;
@@ -261,7 +342,7 @@ export class GestionarHorariosComponent implements OnInit {
     { valor: 'THURSDAY', nombre: 'Jueves' },
     { valor: 'FRIDAY', nombre: 'Viernes' },
     { valor: 'SATURDAY', nombre: 'Sábado' },
-    { valor: 'SUNDAY', nombre: 'Domingo' }
+    { valor: 'SUNDAY', nombre: 'Domingo' },
   ];
 
   constructor(
@@ -274,7 +355,10 @@ export class GestionarHorariosComponent implements OnInit {
       dia: ['', Validators.required],
       horaInicio: ['', Validators.required],
       horaFin: ['', Validators.required],
-      duracionCita: [30, [Validators.required, Validators.min(15), Validators.max(120)]]
+      duracionCita: [
+        30,
+        [Validators.required, Validators.min(15), Validators.max(120)],
+      ],
     });
   }
 
@@ -292,8 +376,10 @@ export class GestionarHorariosComponent implements OnInit {
     }
 
     try {
-      const doctores = await this.http.get<any[]>('http://localhost:8081/api/doctores').toPromise();
-      const doctor = doctores?.find(d => d.correo === correoDoctor);
+      const doctores = await this.http
+        .get<any[]>(`${BASE_API}/doctores`)
+        .toPromise();
+      const doctor = doctores?.find((d) => d.correo === correoDoctor);
       if (doctor) {
         this.doctorId = doctor.id;
         console.log('✅ Doctor ID encontrado:', this.doctorId);
@@ -314,19 +400,19 @@ export class GestionarHorariosComponent implements OnInit {
 
     this.cargandoHorarios = true;
 
-    this.horarioService.obtenerHorariosPorDoctor(this.doctorId)
-      .subscribe({
-        next: (horarios: HorarioDoctor[]) => {
-          this.horarios = horarios;
-          this.cargandoHorarios = false;
-          console.log('✅ Horarios cargados del backend:', horarios);
-        },
-        error: (err: any) => {
-          console.error('❌ Error al cargar horarios:', err);
-          this.error = 'Error al cargar horarios: ' + (err.error?.message || err.message);
-          this.cargandoHorarios = false;
-        }
-      });
+    this.horarioService.obtenerHorariosPorDoctor(this.doctorId).subscribe({
+      next: (horarios: HorarioDoctor[]) => {
+        this.horarios = horarios;
+        this.cargandoHorarios = false;
+        console.log('✅ Horarios cargados del backend:', horarios);
+      },
+      error: (err: any) => {
+        console.error('❌ Error al cargar horarios:', err);
+        this.error =
+          'Error al cargar horarios: ' + (err.error?.message || err.message);
+        this.cargandoHorarios = false;
+      },
+    });
   }
 
   guardarHorario() {
@@ -335,17 +421,22 @@ export class GestionarHorariosComponent implements OnInit {
     this.cargando = true;
     const datosHorario = {
       ...this.horarioForm.value,
-      doctorId: this.doctorId
+      doctorId: this.doctorId,
     };
 
     const request = this.modoEdicion
-      ? this.horarioService.actualizarHorario(this.horarioEditando!.id!, datosHorario)
+      ? this.horarioService.actualizarHorario(
+          this.horarioEditando!.id!,
+          datosHorario
+        )
       : this.horarioService.crearHorario(datosHorario);
 
     request.subscribe({
       next: (response: any) => {
         console.log('✅ Respuesta del servidor:', response);
-        this.mensaje = this.modoEdicion ? 'Horario actualizado correctamente' : 'Horario creado correctamente';
+        this.mensaje = this.modoEdicion
+          ? 'Horario actualizado correctamente'
+          : 'Horario creado correctamente';
         this.horarioForm.reset({ duracionCita: 30 });
         this.cargarHorarios();
         this.cancelarEdicion();
@@ -355,7 +446,7 @@ export class GestionarHorariosComponent implements OnInit {
         console.error('❌ Error al guardar horario:', err);
         this.error = err.error?.message || 'Error al guardar el horario';
         this.cargando = false;
-      }
+      },
     });
   }
 
@@ -366,7 +457,7 @@ export class GestionarHorariosComponent implements OnInit {
       dia: horario.dia,
       horaInicio: horario.horaInicio,
       horaFin: horario.horaFin,
-      duracionCita: horario.duracionCita
+      duracionCita: horario.duracionCita,
     });
   }
 
@@ -380,19 +471,29 @@ export class GestionarHorariosComponent implements OnInit {
     const activar = horario.estado !== 'ACTIVO';
     const motivo = activar ? undefined : 'Bloqueado temporalmente';
 
-    this.horarioService.toggleEstadoHorario(horario.id!, activar, motivo).subscribe({
-      next: () => {
-        this.mensaje = `Horario ${activar ? 'activado' : 'bloqueado'} correctamente`;
-        this.cargarHorarios();
-      },
-      error: (err: any) => {
-        this.error = err.error?.error || `Error al ${activar ? 'activar' : 'bloquear'} el horario`;
-      }
-    });
+    this.horarioService
+      .toggleEstadoHorario(horario.id!, activar, motivo)
+      .subscribe({
+        next: () => {
+          this.mensaje = `Horario ${
+            activar ? 'activado' : 'bloqueado'
+          } correctamente`;
+          this.cargarHorarios();
+        },
+        error: (err: any) => {
+          this.error =
+            err.error?.error ||
+            `Error al ${activar ? 'activar' : 'bloquear'} el horario`;
+        },
+      });
   }
 
   eliminarHorario(horario: HorarioDoctor) {
-    if (!confirm('¿Estás seguro de que deseas eliminar este horario? Esta acción no se puede deshacer.')) {
+    if (
+      !confirm(
+        '¿Estás seguro de que deseas eliminar este horario? Esta acción no se puede deshacer.'
+      )
+    ) {
       return;
     }
 
@@ -403,25 +504,29 @@ export class GestionarHorariosComponent implements OnInit {
       },
       error: (err: any) => {
         this.error = err.error?.error || 'Error al eliminar el horario';
-      }
+      },
     });
   }
 
   obtenerHorariosPorDia(dia: string): HorarioDoctor[] {
-    return this.horarios.filter(h => h.dia === dia);
+    return this.horarios.filter((h) => h.dia === dia);
   }
 
   obtenerNombreDia(dia: string): string {
-    const diaEncontrado = this.diasSemana.find(d => d.valor === dia);
+    const diaEncontrado = this.diasSemana.find((d) => d.valor === dia);
     return diaEncontrado?.nombre || dia;
   }
 
   obtenerClasseEstado(estado: string): string {
     switch (estado) {
-      case 'ACTIVO': return 'bg-success';
-      case 'BLOQUEADO': return 'bg-warning';
-      case 'INACTIVO': return 'bg-danger';
-      default: return 'bg-secondary';
+      case 'ACTIVO':
+        return 'bg-success';
+      case 'BLOQUEADO':
+        return 'bg-warning';
+      case 'INACTIVO':
+        return 'bg-danger';
+      default:
+        return 'bg-secondary';
     }
   }
 }

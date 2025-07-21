@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import { AuthService } from '../../auth/auth.service';
+import { BASE_API } from '../../core/config/api';
 
 @Component({
   selector: 'app-dashboard-doctor',
@@ -214,7 +215,7 @@ export class DashboardDoctorComponent implements OnInit {
   cargando: boolean = false;
   error: string = '';
 
-  private URL_BASE = 'http://localhost:8081/api';
+  private URL_BASE = BASE_API;
 
   constructor(
     private http: HttpClient,

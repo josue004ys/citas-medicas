@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../auth/auth.service';
+import { BASE_API } from '../../core/config/api';
 
 interface Cita {
   id: number;
@@ -28,7 +29,7 @@ interface Cita {
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './mis-citas.component.html',
-  styleUrl: './mis-citas.component.scss'
+  styleUrl: './mis-citas.component.scss',
 })
 export class MisCitasComponent implements OnInit {
   citas: Cita[] = [];
@@ -48,12 +49,9 @@ export class MisCitasComponent implements OnInit {
   horariosDisponibles: string[] = [];
   cargandoHorarios = false;
 
-  private URL_BASE = 'http://localhost:8081/api';
+  private URL_BASE = BASE_API;
 
-  constructor(
-    private http: HttpClient,
-    public auth: AuthService
-  ) { }
+  constructor(private http: HttpClient, public auth: AuthService) {}
 
   ngOnInit(): void {
     this.cargarCitas();
@@ -78,14 +76,14 @@ export class MisCitasComponent implements OnInit {
         // Filtrar citas según el rol del usuario
         if (this.auth.esDoctor()) {
           // Si es doctor, mostrar solo sus citas
-          this.citas = todasLasCitas.filter(cita =>
-            cita.doctorCorreo === correo
+          this.citas = todasLasCitas.filter(
+            (cita) => cita.doctorCorreo === correo
           );
           console.log('👨‍⚕️ Citas filtradas para doctor:', this.citas);
         } else {
           // Si es paciente, mostrar solo sus citas
-          this.citas = todasLasCitas.filter(cita =>
-            cita.pacienteCorreo === correo
+          this.citas = todasLasCitas.filter(
+            (cita) => cita.pacienteCorreo === correo
           );
           console.log('👤 Citas filtradas para paciente:', this.citas);
         }
@@ -94,9 +92,10 @@ export class MisCitasComponent implements OnInit {
       },
       error: (error) => {
         console.error('❌ Error al cargar citas:', error);
-        this.error = 'Error al cargar las citas. Verifica que el servidor esté funcionando.';
+        this.error =
+          'Error al cargar las citas. Verifica que el servidor esté funcionando.';
         this.cargando = false;
-      }
+      },
     });
   }
 
@@ -106,7 +105,7 @@ export class MisCitasComponent implements OnInit {
       weekday: 'long',
       year: 'numeric',
       month: 'long',
-      day: 'numeric'
+      day: 'numeric',
     });
   }
 
@@ -114,27 +113,37 @@ export class MisCitasComponent implements OnInit {
     const date = new Date(fechaHora);
     return date.toLocaleTimeString('es-ES', {
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
     });
   }
 
   getBadgeClass(estado: string): string {
     switch (estado) {
-      case 'ATENDIDA': return 'badge bg-success';
-      case 'CANCELADA': return 'badge bg-danger';
-      case 'CONFIRMADA': return 'badge bg-info';
-      case 'PENDIENTE': return 'badge bg-warning text-dark';
-      default: return 'badge bg-secondary';
+      case 'ATENDIDA':
+        return 'badge bg-success';
+      case 'CANCELADA':
+        return 'badge bg-danger';
+      case 'CONFIRMADA':
+        return 'badge bg-info';
+      case 'PENDIENTE':
+        return 'badge bg-warning text-dark';
+      default:
+        return 'badge bg-secondary';
     }
   }
 
   getStatusIcon(estado: string): string {
     switch (estado) {
-      case 'ATENDIDA': return 'fas fa-check-circle me-1';
-      case 'CANCELADA': return 'fas fa-times-circle me-1';
-      case 'CONFIRMADA': return 'fas fa-check me-1';
-      case 'PENDIENTE': return 'fas fa-clock me-1';
-      default: return 'fas fa-question-circle me-1';
+      case 'ATENDIDA':
+        return 'fas fa-check-circle me-1';
+      case 'CANCELADA':
+        return 'fas fa-times-circle me-1';
+      case 'CONFIRMADA':
+        return 'fas fa-check me-1';
+      case 'PENDIENTE':
+        return 'fas fa-clock me-1';
+      default:
+        return 'fas fa-question-circle me-1';
     }
   }
 
@@ -149,7 +158,7 @@ export class MisCitasComponent implements OnInit {
       month: 'long',
       day: 'numeric',
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
     });
   }
 
@@ -166,21 +175,24 @@ export class MisCitasComponent implements OnInit {
     this.error = '';
 
     // Implementar cancelación a través del backend
-    this.http.put(`${this.URL_BASE}/citas/${citaId}/cancelar`, {
-      motivo: 'Cancelada por el ' + (this.auth.esDoctor() ? 'doctor' : 'paciente')
-    }).subscribe({
-      next: () => {
-        this.mensaje = 'Cita cancelada exitosamente';
-        this.cancelando = false;
-        this.cargarCitas(); // Recargar la lista
-        console.log('✅ Cita cancelada exitosamente');
-      },
-      error: (error: any) => {
-        console.error('❌ Error al cancelar cita:', error);
-        this.error = 'Error al cancelar la cita';
-        this.cancelando = false;
-      }
-    });
+    this.http
+      .put(`${this.URL_BASE}/citas/${citaId}/cancelar`, {
+        motivo:
+          'Cancelada por el ' + (this.auth.esDoctor() ? 'doctor' : 'paciente'),
+      })
+      .subscribe({
+        next: () => {
+          this.mensaje = 'Cita cancelada exitosamente';
+          this.cancelando = false;
+          this.cargarCitas(); // Recargar la lista
+          console.log('✅ Cita cancelada exitosamente');
+        },
+        error: (error: any) => {
+          console.error('❌ Error al cancelar cita:', error);
+          this.error = 'Error al cancelar la cita';
+          this.cancelando = false;
+        },
+      });
   }
 
   // ========= GESTIÓN DE CITAS POR PARTE DEL PACIENTE =========
@@ -212,11 +224,17 @@ export class MisCitasComponent implements OnInit {
     const datos = {
       nuevaFecha: this.nuevaFecha,
       nuevaHora: this.nuevaHora,
-      motivo: this.motivoReprogramacion || 'Solicitud de reprogramación por el paciente',
-      correoUsuario: this.auth.obtenerCorreo()
+      motivo:
+        this.motivoReprogramacion ||
+        'Solicitud de reprogramación por el paciente',
+      correoUsuario: this.auth.obtenerCorreo(),
     };
 
-    this.http.post(`${this.URL_BASE}/citas/${this.citaAReprogramar.id}/solicitar-reprogramacion`, datos)
+    this.http
+      .post(
+        `${this.URL_BASE}/citas/${this.citaAReprogramar.id}/solicitar-reprogramacion`,
+        datos
+      )
       .subscribe({
         next: (response: any) => {
           this.mensaje = response.mensaje || 'Cita reprogramada exitosamente';
@@ -237,16 +255,19 @@ export class MisCitasComponent implements OnInit {
           if (error.error?.error) {
             this.error = error.error.error;
           } else if (error.status === 400) {
-            this.error = 'No se puede reprogramar esta cita. Verifique las restricciones.';
+            this.error =
+              'No se puede reprogramar esta cita. Verifique las restricciones.';
           } else if (error.status === 0) {
-            this.error = 'Error de conexión. Verifique que el servidor esté funcionando.';
+            this.error =
+              'Error de conexión. Verifique que el servidor esté funcionando.';
           } else {
-            this.error = 'Error inesperado al reprogramar la cita. Intente nuevamente.';
+            this.error =
+              'Error inesperado al reprogramar la cita. Intente nuevamente.';
           }
         },
         complete: () => {
           this.cargando = false;
-        }
+        },
       });
   }
 
@@ -266,10 +287,11 @@ export class MisCitasComponent implements OnInit {
 
     const datos = {
       motivo: motivo || 'Cancelación solicitada por el paciente',
-      correoUsuario: this.auth.obtenerCorreo()
+      correoUsuario: this.auth.obtenerCorreo(),
     };
 
-    this.http.put(`${this.URL_BASE}/citas/${cita.id}/cancelar-paciente`, datos)
+    this.http
+      .put(`${this.URL_BASE}/citas/${cita.id}/cancelar-paciente`, datos)
       .subscribe({
         next: (response: any) => {
           this.mensaje = response.mensaje || 'Cita cancelada exitosamente';
@@ -280,7 +302,7 @@ export class MisCitasComponent implements OnInit {
         },
         complete: () => {
           this.cancelando = false;
-        }
+        },
       });
   }
 
@@ -315,7 +337,10 @@ export class MisCitasComponent implements OnInit {
     // Extraer el ID del doctor de la cita
     const doctorId = this.obtenerDoctorId(this.citaAReprogramar);
 
-    this.http.get(`${this.URL_BASE}/citas/doctor/${doctorId}/horarios-disponibles?fecha=${this.nuevaFecha}`)
+    this.http
+      .get(
+        `${this.URL_BASE}/citas/doctor/${doctorId}/horarios-disponibles?fecha=${this.nuevaFecha}`
+      )
       .subscribe({
         next: (response: any) => {
           this.horariosDisponibles = response.horarios || [];
@@ -331,7 +356,7 @@ export class MisCitasComponent implements OnInit {
         },
         complete: () => {
           this.cargandoHorarios = false;
-        }
+        },
       });
   }
 
@@ -351,7 +376,8 @@ export class MisCitasComponent implements OnInit {
     // Verificar si la cita es en menos de 24 horas
     const fechaHoraCita = new Date(cita.fechaHora);
     const ahora = new Date();
-    const horasHastaCita = (fechaHoraCita.getTime() - ahora.getTime()) / (1000 * 60 * 60);
+    const horasHastaCita =
+      (fechaHoraCita.getTime() - ahora.getTime()) / (1000 * 60 * 60);
 
     if (horasHastaCita < 24) {
       return false;
@@ -370,7 +396,8 @@ export class MisCitasComponent implements OnInit {
 
     const fechaHoraCita = new Date(cita.fechaHora);
     const ahora = new Date();
-    const horasHastaCita = (fechaHoraCita.getTime() - ahora.getTime()) / (1000 * 60 * 60);
+    const horasHastaCita =
+      (fechaHoraCita.getTime() - ahora.getTime()) / (1000 * 60 * 60);
 
     if (horasHastaCita < 24) {
       const horasRestantes = Math.floor(horasHastaCita);
